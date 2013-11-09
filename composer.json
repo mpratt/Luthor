@@ -1,0 +1,22 @@
+{
+    "name": "mpratt/luthor",
+    "type": "library",
+    "description": "",
+    "keywords": ["Markdown", "Lexer", "Parser", "md", "Mark down"],
+    "homepage": "https://github.com/mpratt/Luthor",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michael Pratt",
+            "email": "pratt@hablarmierda.net",
+            "homepage": "http://www.michael-pratt.com",
+            "role": "Author/Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3"
+    },
+    "autoload": {
+        "psr-0": {"Luthor": "Lib/"}
+    }
+}

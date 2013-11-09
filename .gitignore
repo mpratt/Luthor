@@ -1,0 +1,8 @@
+.DS_Store
+vendor/*
+Docs/*
+Toolkit/*
+Tests/Coverage
+composer.lock
+composer.phar
+stuff/
