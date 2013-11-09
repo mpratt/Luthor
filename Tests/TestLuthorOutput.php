@@ -102,6 +102,7 @@ class TestLuthor extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $result);
     }
 
+    /*
     public function testCodeBlock()
     {
         list($input, $expected) = $this->get('CodeBlock');
@@ -111,7 +112,6 @@ class TestLuthor extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $result);
     }
 
-    /*
     public function testList()
     {
         list($input, $expected) = $this->get('List');

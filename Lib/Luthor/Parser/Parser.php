@@ -17,40 +17,84 @@ namespace Luthor\Parser;
  */
 class Parser
 {
+    /** @var Instance of \Luthor\Lexer\TokenCollection */
     protected $collection;
+
     protected $holder = array(
         'FOOTNOTE_DEFINITION' => array(),
         'ABBR_DEFINITION' => array(),
     );
-    protected $operations = array(
-        'LINE' => 'newLine',
-        'H_SETEXT' => 'headerSetext',
-        'H_ATX' => 'headerAtx',
-        'INLINE_LINK' => 'links',
-        'INLINE_IMG' => 'images',
-        'INLINE_ELEMENT' => 'inline',
-        'HR' => 'setHr',
-        'BLOCKQUOTE_MK' => 'open',
-        'CLOSE_BLOCKQUOTE_MK' => 'close',
-        'CODEBLOCK_MK' => 'code',
-        'CLOSE_CODEBLOCK_MK' => 'codeClose',
-        'LISTBLOCK_MK' => 'listH',
-        'CLOSE_LISTBLOCK_MK' => 'listClose',
-        'LISTBLOCK_INDENT_MK' => 'listH',
-        'CLOSE_LISTBLOCK_INDENT_MK' => 'listClose',
-        'RAW' => '',
-    );
 
-    public function __construct(\Luthor\Lexer\TokenCollection $collection)
+    /** @var array The mapping for Token -> operation/processor */
+    protected $operations = array();
+
+    /**
+     * Construct
+     *
+     * @param array $config
+     * @return void
+     */
+    public function __construct(array $config = array())
     {
-        $this->collection = $collection;
+        $this->config = array_replace_recursive(array(
+        ), $config);
+
+        $this->operations = $this->buildOperations();
     }
 
-    public function parse()
+    /**
+     * Maps tokens to their relevant operation/processor function.
+     *
+     * @return array with token -> operation relationship
+     */
+    protected function buildOperations()
+    {
+        return array(
+            'RAW' => function ($token) { return $token->content; },
+            'LINE' => function () { return "\n"; },
+            'HR' => function () { return '<hr/>'; },
+            'H_SETEXT' => 'headerSetext',
+            'H_ATX' => 'headerAtx',
+            'INLINE_LINK' => 'links',
+            'INLINE_IMG' => 'images',
+            'INLINE_ELEMENT' => 'inline',
+            'BLOCKQUOTE_MK' => 'open',
+            'CLOSE_BLOCKQUOTE_MK' => 'close',
+            'CODEBLOCK_MK' => 'code',
+            'CLOSE_CODEBLOCK_MK' => 'codeClose',
+        );
+    }
+
+    /**
+     * Registers a new operation for a given token name
+     *
+     * @param string $token
+     * @param mixed|callable $operation
+     * @return void
+     */
+    public function registerOperation($token, $operation)
+    {
+        $this->operations[strtoupper($token)] = $operation;
+    }
+
+    /**
+     * Actually parses the available tokens
+     *
+     * @param object $collection Instance of \Luthor\Lexer\TokenCollection
+     * @return string
+     * @throws LogicException When there is no available operation for
+     *                        a token
+     */
+    public function parse(\Luthor\Lexer\TokenCollection $collection)
     {
         $output = array();
-        //print_r($this->collection);
-        foreach ($this->collection as $token) {
+        //print_r($collection);
+        foreach ($collection as $token) {
+
+            if ($token instanceof TokenCollection) {
+                $output[] = $this->parse($token);
+                continue ;
+            }
 
             if (in_array($token->type, array('FOOTNOTE_DEFINITION', 'ABBR_DEFINITION'))) {
                 $this->holder[$token->type][] = $token;
@@ -77,14 +121,25 @@ class Parser
         return trim($output, "\n");
     }
 
-    public function listH($token)
+    /**
+     * Determines the operation to be run for the given token
+     *
+     * @param mixed $operation Closure, method name or other callable function
+     *                         to be used for this token.
+     * @param object $token
+     * @return string
+     */
+    protected function run($operation, \Luthor\Lexer\Token $token)
     {
-        return "<ul><li>\n";
-    }
+        if (is_object($operation) && ($operation instanceof \Closure)) {
+            return $operation($token);
+        } elseif (is_string($operation) && method_exists($this, $operation)) {
+            return $this->{$operation}($token);
+        } elseif (is_callable($operation)){
+            return call_user_func($operation, $token);
+        }
 
-    public function listClose($token)
-    {
-        return "</li></ul>\n";
+        return $token->content;
     }
 
     public function code()
@@ -133,22 +188,6 @@ class Parser
         }
 
         return $text;
-    }
-
-    protected function run($operation, $token)
-    {
-        if (method_exists($this, $operation)) {
-            return $this->{$operation}($token);
-        } elseif (is_callable($operation)){
-            return call_user_func($operation, $token);
-        }
-
-        return $token->content;
-    }
-
-    protected function newLine()
-    {
-        return "\n";
     }
 
     protected function headerSetext($token)
@@ -227,11 +266,6 @@ class Parser
         }
 
         return '<' . $tag . '>' . $content . '</' . $tag . '>';
-    }
-
-    protected function setHr()
-    {
-        return '<hr/>';
     }
 }
 

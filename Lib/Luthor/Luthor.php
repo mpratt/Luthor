@@ -26,6 +26,9 @@ class Luthor
     /** @var object Instance of \Luthor\Lexer\Lexer */
     protected $lexer;
 
+    /** @var object Instance of \Luthor\Parser\Parser */
+    protected $parser;
+
     /**
      * Construct
      *
@@ -34,12 +37,13 @@ class Luthor
      */
     public function __construct(array $config = array())
     {
-        $this->config = array_merge(array(
+        $this->config = array_replace_recursive(array(
             'tab_width' => 4,
             'escape' => false,
         ), $config);
 
-        $this->lexer = new Lexer\Lexer($this->config);
+        $this->lexer  = new Lexer\Lexer($this->config);
+        $this->parser = new Parser\Parser($this->config);
     }
 
     /**
@@ -51,11 +55,10 @@ class Luthor
     public function parse($text)
     {
         $text = $this->prepareText($text);
-        $tokenCollection = $this->lexer->getTokens($text);
+        $tokens = $this->lexer->getTokens($text);
+        $parsed = $this->parser->parse($tokens);
 
-        $parser = new Parser\Parser($tokenCollection);
-
-        return $parser->parse();
+        return $parsed;
     }
 
     /**

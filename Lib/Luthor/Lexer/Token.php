@@ -66,7 +66,7 @@ class Token
     }
 
     /**
-     * Normalizes Attributes passed to this token
+     * Normalizes ids or classes passed to the token
      *
      * @param string $attr
      * @return string
@@ -76,26 +76,15 @@ class Token
         $return = '';
         if (preg_match('~^(id=|class=)~', $attr)) {
             return $attr;
-        } else if (preg_match('~{(.+)}~', $attr, $m)) {
-            $hasId = false;
-            $classes = array();
-            $attributes = explode(' ', $m['1']);
-            foreach ($attributes as $a) {
-                $a = trim($a);
-                if (!$hasId && substr($a, 0, 1) == '#') {
-                    $return .= ' id="' . trim($a, '#') . '"';
-                    $hasId = true;
-                } else {
-                    $classes[] = trim($a, '.');
-                }
+        } elseif (preg_match('~{(.+)}~', $attr, $m)) {
+
+            if (preg_match('~#([^ ]+)~', $m['1'], $id)) {
+                $return .= ' id="' . $id['1'] . '"';
             }
 
-            if (!empty($classes)) {
-                $return .= ' class="' . implode(' ', $classes) . '"';
+            if (preg_match_all('~\.([^ ]+)~', $m['1'], $classes)) {
+                $return .= ' class="' . implode(' ', $classes['1']) . '"';
             }
-
-            $attr = preg_replace('~{(.+)}~', '', $attr);
-            $this->content .= $attr;
 
             return trim($return);
         }

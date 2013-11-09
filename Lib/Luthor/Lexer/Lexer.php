@@ -13,8 +13,8 @@
 namespace Luthor\Lexer;
 
 /**
- * A pseudo Lexer that analizes a text
- * and splits it into Tokens
+ * Lets call this 'pseudo' Lexer. It analizes a text
+ * and tokenizes it.
  */
 class Lexer
 {
@@ -35,9 +35,8 @@ class Lexer
         $this->collection = new TokenCollection();
         $this->config = array_replace_recursive(array(
             'map' => new TokenMap(),
-            'force_line_start' => array(
-                'LINE', 'HR', 'BLOCKQUOTE_MK', 'CODEBLOCK_MK', 'LIST_MK'
-            )
+            'ignore_attr' => array('RAW'),
+            'force_line_start' => array('HR', 'BLOCKQUOTE_MK', 'CODEBLOCK_MK'),
         ), $config);
     }
 
@@ -70,6 +69,18 @@ class Lexer
     }
 
     /**
+     * Registers a new regex => token relation to the class.
+     *
+     * @param string $rule Regex
+     * @param string $token token name
+     * @return void
+     */
+    public function addToken($rule, $token)
+    {
+        $this->config['map']->add($rule, $token);
+    }
+
+    /**
      * Matches a text to the relevant token name
      *
      * @param string $content
@@ -79,19 +90,24 @@ class Lexer
      */
     protected function match($content, &$offset, $line)
     {
-        $attr = '';
         foreach ($this->config['map'] as $regex => $tokenName)
         {
+            $attr = '';
             if (preg_match($regex, $content, $matches, null, $offset)) {
 
-                // This elements can only be valid on their own line, from begining to end
-                // Or at the **real** start of the line
+                /**
+                 * Dirty hack!
+                 * Some tokens can only be valid when they start on their own line.
+                 * If the offset is bigger than 0, convert this tokens into RAW type
+                 */
                 if (in_array($tokenName, $this->config['force_line_start']) && $offset > 0) {
                     $tokenName = 'RAW';
                 }
 
                 $offset += strlen($matches['0']);
-                if (!in_array($tokenName, array('RAW')) && strpos($matches['0'], '{') !== false) {
+
+                // Find attributes on elements that are not in $this->config['ignore_attr']
+                if (!in_array($tokenName, $this->config['ignore_attr']) && strpos($matches['0'], '{') !== false) {
                     $attr = $this->findAttributes($matches['0']);
                 }
 
@@ -100,13 +116,14 @@ class Lexer
         }
 
         $offset += (strlen($content) - $offset);
-        return new Token($content, 'RAW', $attr, $offset, $line);
+        return new Token($content, 'RAW', '', $offset, $line);
     }
 
     /**
      * Finds markdown's classes/ids in the form of {#id} or {.class1 .class2}
+     * or even {.class #id .class2}
      *
-     * @param string $content passed by reference
+     * @param string $content passed by reference!!
      * @return string
      */
     protected function findAttributes(&$content)
