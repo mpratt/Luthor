@@ -43,6 +43,16 @@ class TokenMap implements \IteratorAggregate
     );
 
     /**
+     * Construct
+     *
+     * @return void
+     */
+    public function __construct(array $config = array())
+    {
+        $this->config = $config;
+    }
+
+    /**
      * Adds a new regex => token relation to the class.
      * Instead of appending the info at the end of the
      * array, it prepends it.

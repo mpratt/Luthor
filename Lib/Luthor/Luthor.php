@@ -23,6 +23,9 @@ class Luthor
     /** @var array Associative array with configuration directives */
     protected $config = array();
 
+    /** @var object Instance of \Luthor\Lexer\TokenMap */
+    protected $tokenMap;
+
     /** @var object Instance of \Luthor\Lexer\Lexer */
     protected $lexer;
 
@@ -42,8 +45,9 @@ class Luthor
             'escape' => false,
         ), $config);
 
-        $this->lexer  = new Lexer\Lexer($this->config);
-        $this->parser = new Parser\Parser($this->config);
+        $this->tokenMap = new Lexer\TokenMap($this->config);
+        $this->lexer    = new Lexer\Lexer($this->config);
+        $this->parser   = new Parser\Parser($this->config);
     }
 
     /**
@@ -55,6 +59,9 @@ class Luthor
     public function parse($text)
     {
         $text = $this->prepareText($text);
+
+        $this->lexer->setMap($this->tokenMap);
+
         $tokens = $this->lexer->getTokens($text);
         $parsed = $this->parser->parse($tokens);
 
@@ -93,6 +100,31 @@ class Luthor
 
         // Add a couple of new lines at the end of the text
         return trim($text, "\n") . "\n\n";
+    }
+
+    /**
+     * Registers a new regex => token relation to the class.
+     *
+     * @param string $rule Regex
+     * @param string $token token name
+     * @param callable $operation the functiont to be called on the found token
+     * @return void
+     */
+    public function addTokenOperation($rule, $token, callable $operation)
+    {
+        $this->tokenMap->add($rule, strtoupper($token));
+        $this->parser->addOperation($token, $operation);
+    }
+
+    /**
+     * Adds a new filter into the parser
+     *
+     * @param mixed $func A Callable function/method to be used as a filter
+     * @return void
+     */
+    public function addFilter(callable $func)
+    {
+        $this->parser->addFilter($func);
     }
 }
 

@@ -24,6 +24,9 @@ class Lexer
     /** @var Instance of \Luthor\Lexer\TokenCollection */
     protected $collection;
 
+    /** @var object Instance of \Luthor\Lexer\TokenMap */
+    protected $tokenMap;
+
     /**
      * Construct
      *
@@ -34,13 +37,22 @@ class Lexer
     {
         $this->collection = new TokenCollection();
         $this->config = array_replace_recursive(array(
-            'map' => new TokenMap(),
             'ignore_attr' => array('RAW'),
             'force_line_start' => array(
                 'HR', 'BLOCKQUOTE', 'CODEBLOCK', 'FENCED_CODEBLOCK', 'REFERENCE_DEFINITION',
                 'FOOTNOTE_DEFINITION', 'ABBR_DEFINITION'
             ),
         ), $config);
+    }
+
+    /**
+     * Sets the TokenMap for the lexer
+     *
+     * @return void
+     */
+    public function setMap(TokenMap $map)
+    {
+        $this->tokenMap = $map;
     }
 
     /**
@@ -78,18 +90,6 @@ class Lexer
     }
 
     /**
-     * Registers a new regex => token relation to the class.
-     *
-     * @param string $rule Regex
-     * @param string $token token name
-     * @return void
-     */
-    public function addToken($rule, $token)
-    {
-        $this->config['map']->add($rule, $token);
-    }
-
-    /**
      * Matches a text to the relevant token name
      *
      * @param string $content
@@ -99,7 +99,7 @@ class Lexer
      */
     protected function match($content, &$offset, $line)
     {
-        foreach ($this->config['map'] as $regex => $tokenName)
+        foreach ($this->tokenMap as $regex => $tokenName)
         {
             $attr = '';
             if (preg_match($regex, $content, $matches, null, $offset)) {
