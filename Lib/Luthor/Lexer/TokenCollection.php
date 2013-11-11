@@ -24,14 +24,6 @@ class TokenCollection implements \IteratorAggregate
     /** @var array with currently opened blocks */
     protected $blocks = array();
 
-    /** @var array with status information about open or closed blocks */
-    protected $status = array(
-        'blocks' => array(), // Currently opened blocks
-        'closed' => array(), // Already closed blocks
-        'remove' => array(), // Coordinates of tokens to be removed
-        'lists'  => array(),
-    );
-
     /** @var array With Tokens */
     protected $tokens = array();
 

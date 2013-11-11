@@ -51,19 +51,36 @@ class Parser
      */
     protected function buildOperations()
     {
+        $headings = new Processor\Headings();
+        $inline = new Processor\Inline();
+
         return array(
-            'RAW' => function ($token) { return $token->content; },
-            'LINE' => function () { return "\n"; },
-            'HR' => function () { return '<hr/>'; },
-            'H_SETEXT' => 'headerSetext',
-            'H_ATX' => 'headerAtx',
-            'INLINE_LINK' => 'links',
-            'INLINE_IMG' => 'images',
-            'INLINE_ELEMENT' => 'inline',
-            'BLOCKQUOTE' => 'open',
-            'CLOSE_BLOCKQUOTE' => 'close',
-            'CODEBLOCK' => 'code',
-            'CLOSE_CODEBLOCK' => 'codeClose',
+            'RAW' => function ($token) {
+                return $token->content;
+            },
+            'LINE' => function () {
+                return "\n";
+            },
+            'HR' => function () {
+                return '<hr/>';
+            },
+            'BLOCKQUOTE' => function () {
+                return '<blockquote>' . "\n";
+            },
+            'CLOSE_BLOCKQUOTE' => function () {
+                return '</blockquote>';
+            },
+            'CODEBLOCK' => function () {
+                return '<pre><code>' . "\n";
+            },
+            'CLOSE_CODEBLOCK' => function () {
+                return '</code></pre>' . "\n";
+            },
+            'H_SETEXT' => array($headings, 'setext'),
+            'H_ATX' => array($headings, 'atx'),
+            'INLINE_LINK' => array($inline, 'link'),
+            'INLINE_IMG' => array($inline, 'image'),
+            'INLINE_ELEMENT' => array($inline, 'span'),
         );
     }
 
@@ -74,7 +91,7 @@ class Parser
      * @param mixed|callable $operation
      * @return void
      */
-    public function registerOperation($token, $operation)
+    public function addOperation($token, $operation)
     {
         $this->operations[strtoupper($token)] = $operation;
     }
@@ -97,7 +114,7 @@ class Parser
             }
 
             if ($token->type == 'ABBR_DEFINITION') {
-                $this->addFilter(function ($text)  use ($token) {
+                $this->addFilter(function ($text) use ($token) {
                     $def = '<abbr title="' . $token->matches['3'] . '">' . $token->matches['2'] . '</abbr>';
                     return preg_replace('~\b' . preg_quote($token->matches['2'], '\b~'). '~', $def, $text);
                 });
@@ -143,9 +160,7 @@ class Parser
     {
         if (is_callable($operation)) {
             return $operation($token);
-        } elseif (is_string($operation) && method_exists($this, $operation)) {
-            return $this->{$operation}($token);
-        } else if ($token instanceof \Luthor\Lexer\Token) {
+        } elseif ($token instanceof \Luthor\Lexer\Token) {
             return $token->content;
         }
 
@@ -173,7 +188,7 @@ class Parser
      * @param mixed $func A Callable function/method to be used as a filter
      * @return void
      */
-    public function addFilter(Callable $func)
+    public function addFilter(callable $func)
     {
         $this->filters[] = $func;
     }
@@ -215,105 +230,7 @@ class Parser
         return $text;
     }
 
-    public function code()
-    {
-        return '<pre><code>' . "\n";
-    }
 
-    public function codeClose()
-    {
-        return '</code></pre>' . "\n";
-    }
-
-    public function open($token)
-    {
-        $tag = strtolower(preg_replace('~_MK$~', '', $token->type));
-        return '<' . trim($tag) . '>' . "\n";
-    }
-
-    public function close($token)
-    {
-        $tag = strtolower(preg_replace('~^CLOSE_|_MK$~', '', $token->type));
-        return '</' . trim($tag) . '>';
-    }
-
-    protected function headerSetext($token)
-    {
-        $h = (preg_match('~-$~', trim($token->content)) ? '2' : '1');
-        if (empty($token->attr)) {
-            return '<h' . $h . '>' . rtrim($token->content, ' -=') . '</h' . $h . '>';
-        }
-
-        return '<h' . $h . ' ' . $token->attr . '>' . rtrim($token->content, ' -=') . '</h' . $h . '>';
-    }
-
-    protected function headerAtx($token)
-    {
-        list($h, $content) = explode(' ', $token->content, 2);
-        $h = min(strlen(trim($h)), 6);
-
-        if (empty($token->attr)) {
-            return '<h' . $h . '>' . trim($content, ' #') . '</h' . $h . '>';
-        }
-
-        return '<h' . $h . ' ' . $token->attr . '>' . rtrim($content, ' #') . '</h' . $h . '>';
-    }
-
-    protected function links($token)
-    {
-        $inner = trim($token->matches['2']);
-        $href  = trim($token->matches['3']);
-        $title = '';
-
-        $href = preg_replace('~\s*\[(.+)\] ?\: ?~', '', $href);
-        if (preg_match('~(\"|&quot;)(.*)(\"|&quot;)~', $href, $m)) {
-            $href = trim(str_replace($m['0'], '', $href));
-            $title = trim($m['2']);
-        }
-
-        if (empty($token->attr)) {
-            return '<a href="' . $href . '" title="' . $title . '">' . $inner . '</a>';
-        }
-
-        return '<a href="' . $href . '" title="' . $title . '" ' . $token->attr . '>' . $inner . '</a>';
-    }
-
-    protected function images($token)
-    {
-        $alt = trim($token->matches['2']);
-        $src = trim($token->matches['3']);
-        $title = '';
-
-        $src = preg_replace('~\s*\[(.+)\] ?\: ?~', '', $src);
-        if (preg_match('~(\"|&quot;)(.*)(\"|&quot;)~', $src, $m)) {
-            $src = trim(str_replace($m['0'], '', $src));
-            $title = trim($m['2']);
-        }
-
-        if (empty($token->attr)) {
-            return '<img src="' . $src . '" alt="' . $alt . '" title="' . $title . '" />';
-        }
-
-        return '<img src="' . $src . '" alt="' . $alt . '" title="' . $title . '" ' . $token->attr . ' />';
-    }
-
-    protected function inline($token)
-    {
-        $tag = $token->matches['2'];
-        $content = $token->matches['3'];
-
-        if (trim($tag, ' `') == '') {
-            $tag = 'code';
-        } else if (trim($tag, ' ~') == ''){
-            $tag = 'del';
-        } elseif (strlen(trim($tag)) >= 2) {
-            $tag = 'strong';
-        } else {
-            $tag = 'em';
-        }
-
-        return '<' . $tag . '>' . $content . '</' . $tag . '>';
-    }
 }
 
 ?>
