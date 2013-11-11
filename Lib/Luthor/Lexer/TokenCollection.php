@@ -14,25 +14,25 @@ namespace Luthor\Lexer;
 
 /**
  * This class is used to hold a collection
- * of tokens and in some cases organize them appropiately.
- *
- * I know its ugly...
- * TODO: REFACTOR REFACTOR REFACTOR!
+ * of tokens and token blocks
  */
 class TokenCollection implements \IteratorAggregate
 {
-    /** @var Array with the reference map */
-    protected $refs = array();
+    /** @var array with the reference definition map */
+    protected static $refs = array();
 
-    /** @var Array with status information about open or closed blocks */
+    /** @var array with currently opened blocks */
+    protected $blocks = array();
+
+    /** @var array with status information about open or closed blocks */
     protected $status = array(
-        'opened' => array(), // Currently opened blocks
+        'blocks' => array(), // Currently opened blocks
         'closed' => array(), // Already closed blocks
         'remove' => array(), // Coordinates of tokens to be removed
         'lists'  => array(),
     );
 
-    /** @var Array With Tokens */
+    /** @var array With Tokens */
     protected $tokens = array();
 
     /**
@@ -44,112 +44,91 @@ class TokenCollection implements \IteratorAggregate
     public function add(Token $token)
     {
         $coord = $token->line . '.' . $token->position;
-        if ($token->type == 'REFERENCE') {
-            $this->storeReference($token, $coord);
-        } elseif ($token->type == 'REFERENCE_DEFINITION' && !empty($this->refs[$token->matches['2']]['coord'])) {
-            return $this->mergeTokenReferenceDefinition($token);
-        } elseif (strpos($token->type, 'BLOCK') !== false) {
-            $this->updateStatus($token);
-        }
-
-        $this->tokens[$coord] = $token;
-    }
-
-    protected function updateStatus(Token $token)
-    {
-        $previous = $token->line - 1;
-        if (!empty($this->status['opened'][$previous])) {
-            if ($this->status['opened'][$previous] == $token->type) {
-                $this->status['remove'][] = $token->line . '.' . $token->position;
-                $this->status['opened'][$token->line] = $this->status['opened'][$previous];
-                unset($this->status['opened'][$previous]);
-            } else {
-                $this->status['opened'][$token->line] = $token->type;
-            }
+        if (!empty($this->blocks)) {
+            $this->appendToBlock($token);
         } else {
-            $this->status['opened'][$token->line] = $token->type;
+            $this->tokens[$coord] = $token;
         }
     }
 
-    public function flagList(Token $token)
+    /**
+     * Creates a new Token-Block
+     *
+     * @param object Instance of \Luthor\Lexer\Token
+     * @return void
+     */
+    public function createBlock(Token $token)
     {
-        if (empty($this->status['lists'])) {
-            $coord = $token->line . '.' . ($token->position - 1);
-            $this->tokens[$coord] = new Token($token->content, 'OPEN_LIST', '', $token->line, $token->position);
-            $this->status['lists'][($token->line + 1)] = 'close';
-        }
-
-        if (isset($this->status['lists'][$token->line])) {
-            $this->tokens[$token->line] = new Token('', 'CLOSE_LIST_ELEMENT', '', $token->line, $token->position);
-            $this->status['lists'][($token->line + 1)] = 'close';
-            unset($this->status['lists'][$token->line]);
+        if (!empty($this->blocks)) {
+            return $this->appendToBlock($token);
         }
 
         $coord = $token->line . '.' . $token->position;
-        $this->tokens[$coord] = new Token('', 'LIST_ELEMENT', '', $token->line, $token->position);
-    }
-
-    public function closeBlocks(Token $token)
-    {
-        $originalPosition = $token->position;
-
-        if (!empty($this->status['lists'])) {
-
-            unset($this->status['lists'][$token->line]);
-            foreach ($this->status['lists'] as $line => $name) {
-                $token = new Token('', 'CLOSE_LIST_ELEMENT', '', $token->line, $token->position);
-                $this->tokens[$token->line . $line . '.50000'] = $token;
-                unset($this->status['opened'][$line]);
-            }
-
-            $coord = $token->line . '.' . --$token->position . '800';
-            $this->tokens[$coord] = new Token('', 'CLOSE_LIST', '', $token->line, $token->position);
-
-            $coord = $token->line . '.' . --$token->position . '800';
-            $this->tokens[$coord] = new Token('', 'LINE', '', $token->line, $token->position);
-        }
-
-        foreach ($this->status['opened'] as $line => $name) {
-            $coord = $token->line . '.' . --$token->position;
-            $this->tokens[$coord] = new Token('', 'CLOSE_' . $name, '', $token->line, $token->position);
-            $this->status['closed'][] = $name;
-            unset($this->status['opened'][$line]);
-        }
-
-        // Store the new line
-        $coord = $token->line . '.' . $originalPosition;
-        $this->tokens[$coord] = $token;
-    }
-
-    protected function storeReference(Token $token, $coord)
-    {
-        $id = (!empty($token->matches['3']) ? $token->matches['3'] : $token->matches['2']);
-        $this->refs[$id] = array(
+        $this->tokens[$coord] = new TokenBlock($token);
+        $this->blocks[$token->line] = array(
+            'type' => $token->type,
             'coord' => $coord,
-            'name'  => $token->matches['2']
         );
     }
 
-    protected function mergeTokenReferenceDefinition(Token $token)
+    /**
+     * Appends a token into the last opened block
+     * If the block is closed, remove it from the list
+     * of available token-blocks.
+     *
+     * @param object Instance of \Luthor\Lexer\Token
+     * @return void
+     */
+    public function appendToBlock(Token $token)
     {
-        $coord = $this->refs[$token->matches['2']]['coord'];
-        $name = $this->refs[$token->matches['2']]['name'];
-        $oldToken = $this->get($coord);
-
-        if ($oldToken->content['0'] == '!') {
-            $type = 'INLINE_IMG';
-        } else {
-            $type = 'INLINE_LINK';
+        if (empty($this->blocks)) {
+            return $this->add($token);
         }
 
+        $lastBlock = end($this->blocks);
+        $this->tokens[$lastBlock['coord']]->append($token);
+
+        // If the block is closed, lets seal it here too
+        if (!$this->tokens[$lastBlock['coord']]->isOpen()) {
+            array_pop($this->blocks);
+        }
+    }
+
+    /**
+     * Stores a reference definition for later use
+     *
+     * @param object Instance of \Luthor\Lexer\Token
+     * @return void
+     */
+    public function storeDefinition(Token $token)
+    {
+        self::$refs[$token->matches['2']] = $token;
+    }
+
+    /**
+     * Gets a definition for a reference token
+     *
+     * @param  object Instance of \Luthor\Lexer\Token
+     * @return object Instance of \Luthor\Lexer\Token
+     */
+    public function getDefinition(Token $token)
+    {
+        $key = (!empty($token->matches['3']) ? $token->matches['3'] : $token->matches['2']);
+        if (empty(self::$refs[$key])) {
+            $token->type = 'RAW';
+            return $token;
+        }
+
+        $type = ($token->content['0'] == '!' ? 'INLINE_IMG' : 'INLINE_LINK');
+        $definition = self::$refs[$key];
         $matches = array(
             '0' => $token->matches['2'],
             '1' => $token->matches['3'],
-            '2' => $name,
-            '3' => $token->content,
+            '2' => $token->matches['2'],
+            '3' => $definition->content,
         );
 
-        $this->tokens[$coord] = new Token($matches, $type, $token->attr, $oldToken->position, $oldToken->line);
+        return new Token($matches, $type, $definition->attr, $token->position, $token->line);
     }
 
     /**
@@ -169,22 +148,6 @@ class TokenCollection implements \IteratorAggregate
         );
     }
 
-    public function clean()
-    {
-        // Strip irrelevant stuff from the tokens
-        foreach ($this->status['remove'] as $coord) {
-            unset($this->tokens[$coord]);
-        }
-
-        // Close still opened blocks
-        foreach ($this->status['opened'] as $line => $name) {
-            $coord = $line . '.' . 1000000;
-            $this->tokens[$coord] = new Token('', 'CLOSE_' . $name, '', $line, 1000000);
-            $this->status['closed'][] = $name . ' : forced';
-            unset($this->status['opened'][$line]);
-        }
-    }
-
     /**
      * Required Method for the \IteratorAggregate Interface
      *
@@ -192,6 +155,13 @@ class TokenCollection implements \IteratorAggregate
      */
     public function getIterator()
     {
+        // Lets make sure we close opened blocks/subblocks
+        foreach ($this->blocks as $block) {
+            if (!empty($this->tokens[$block['coord']])) {
+                $this->tokens[$block['coord']]->close();
+            }
+        }
+
         return new \ArrayIterator($this->tokens);
     }
 }

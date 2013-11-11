@@ -36,7 +36,10 @@ class Lexer
         $this->config = array_replace_recursive(array(
             'map' => new TokenMap(),
             'ignore_attr' => array('RAW'),
-            'force_line_start' => array('HR', 'BLOCKQUOTE_MK', 'CODEBLOCK_MK'),
+            'force_line_start' => array(
+                'HR', 'BLOCKQUOTE', 'CODEBLOCK', 'REFERENCE_DEFINITION',
+                'FOOTNOTE_DEFINITION', 'ABBR_DEFINITION'
+            ),
         ), $config);
     }
 
@@ -53,18 +56,24 @@ class Lexer
         foreach($lines as $line => $content)
         {
             if (trim($content) == '') {
-                $token = new Token('', 'LINE', '', 0, $line);
-                $this->collection->closeBlocks($token);
+                $this->collection->add(new Token('', 'LINE', '', 0, $line));
+                continue ;
             }
 
             $offset = 0;
             while($offset < strlen($content)) {
                 $token = $this->match($content, $offset, $line);
-                $this->collection->add($token);
+
+                if (strpos($token->type, 'BLOCK') !== false) {
+                    $this->collection->createBlock($token);
+                } elseif ($token->type == 'REFERENCE_DEFINITION') {
+                    $this->collection->storeDefinition($token);
+                } else {
+                    $this->collection->add($token);
+                }
             }
         }
 
-        $this->collection->clean();
         return $this->collection;
     }
 

@@ -20,10 +20,11 @@ class Parser
     /** @var Instance of \Luthor\Lexer\TokenCollection */
     protected $collection;
 
-    protected $holder = array(
-        'FOOTNOTE_DEFINITION' => array(),
-        'ABBR_DEFINITION' => array(),
-    );
+    /** @var array Array with filters */
+    protected $filters = array();
+
+    /** @var array Array with footnote tokens to append at the end */
+    protected $footnotes = array();
 
     /** @var array The mapping for Token -> operation/processor */
     protected $operations = array();
@@ -40,6 +41,7 @@ class Parser
         ), $config);
 
         $this->operations = $this->buildOperations();
+        $this->filters = $this->footnotes = array();
     }
 
     /**
@@ -58,10 +60,10 @@ class Parser
             'INLINE_LINK' => 'links',
             'INLINE_IMG' => 'images',
             'INLINE_ELEMENT' => 'inline',
-            'BLOCKQUOTE_MK' => 'open',
-            'CLOSE_BLOCKQUOTE_MK' => 'close',
-            'CODEBLOCK_MK' => 'code',
-            'CLOSE_CODEBLOCK_MK' => 'codeClose',
+            'BLOCKQUOTE' => 'open',
+            'CLOSE_BLOCKQUOTE' => 'close',
+            'CODEBLOCK' => 'code',
+            'CLOSE_CODEBLOCK' => 'codeClose',
         );
     }
 
@@ -80,34 +82,43 @@ class Parser
     /**
      * Actually parses the available tokens
      *
-     * @param object $collection Instance of \Luthor\Lexer\TokenCollection
+     * @param object $collection Instance of \IteratorAggregate
      * @return string
-     * @throws LogicException When there is no available operation for
-     *                        a token
+     * @throws LogicException When there is no available operation for a token
      */
-    public function parse(\Luthor\Lexer\TokenCollection $collection)
+    public function parse(\IteratorAggregate $collection)
     {
         $output = array();
-        //print_r($collection);
         foreach ($collection as $token) {
 
-            if ($token instanceof TokenCollection) {
+            if ($token instanceof \IteratorAggregate) {
                 $output[] = $this->parse($token);
                 continue ;
             }
 
-            if (in_array($token->type, array('FOOTNOTE_DEFINITION', 'ABBR_DEFINITION'))) {
-                $this->holder[$token->type][] = $token;
+            if ($token->type == 'ABBR_DEFINITION') {
+                $this->addFilter(function ($text)  use ($token) {
+                    $def = '<abbr title="' . $token->matches['3'] . '">' . $token->matches['2'] . '</abbr>';
+                    return preg_replace('~\b' . preg_quote($token->matches['2'], '\b~'). '~', $def, $text);
+                });
+
                 continue ;
+            }
+
+            if ($token->type == 'FOOTNOTE_DEFINITION') {
+                $this->footnotes[] = $token;
+                continue ;
+            }
+
+            if ($token->type == 'INLINE_REFERENCE') {
+                $token = $collection->getDefinition($token);
             }
 
             if (!isset($this->operations[$token->type])) {
                 throw new \LogicException(sprintf('Missing operation for type "%s"', $token->type));
             }
 
-            $operation = $this->operations[$token->type];
-            $string = $this->run($operation, $token);
-
+            $string = $this->run($this->operations[$token->type], $token);
             if (isset($output[$token->line])){
                 $output[$token->line] .= $string;
             } else {
@@ -116,30 +127,92 @@ class Parser
         }
 
         $output = implode("\n", $output);
-        $output = $this->replaceHolders($output);
+        $output = $this->appendFootnotes($output);
 
-        return trim($output, "\n");
+        return trim($this->runFilters($output), "\n");
     }
 
     /**
      * Determines the operation to be run for the given token
      *
      * @param mixed $operation Closure, method name or other callable function
-     *                         to be used for this token.
      * @param object $token
      * @return string
      */
-    protected function run($operation, \Luthor\Lexer\Token $token)
+    protected function run($operation, $token)
     {
-        if (is_object($operation) && ($operation instanceof \Closure)) {
+        if (is_callable($operation)) {
             return $operation($token);
         } elseif (is_string($operation) && method_exists($this, $operation)) {
             return $this->{$operation}($token);
-        } elseif (is_callable($operation)){
-            return call_user_func($operation, $token);
+        } else if ($token instanceof \Luthor\Lexer\Token) {
+            return $token->content;
         }
 
-        return $token->content;
+        return $token;
+    }
+
+    /**
+     * Runs filters on the processed text
+     *
+     * @param string $text
+     * @return string
+     */
+    protected function runFilters($text)
+    {
+        foreach ($this->filters as $filter) {
+            $text = $this->run($filter, $text);
+        }
+
+        return $text;
+    }
+
+    /**
+     * Adds a new filter
+     *
+     * @param mixed $func A Callable function/method to be used as a filter
+     * @return void
+     */
+    public function addFilter(Callable $func)
+    {
+        $this->filters[] = $func;
+    }
+
+    /**
+     * Resets the filters/footnotes properties
+     *
+     * @return void
+     */
+    public function reset()
+    {
+        $this->filters = $this->footnotes = array();
+    }
+
+    /**
+     * Appends footnotes at the end of the text when available
+     *
+     * @param string $text
+     * @return string
+     */
+    protected function appendFootnotes($text)
+    {
+        if (!empty($this->footnotes)) {
+            $append = array('<div class="footnotes"><hr /><ol>');
+            foreach ($this->footnotes as $key => $token) {
+                $key += 1;
+                $id = '<sup id="fnref-' . $key . '"><a href="#fn-' . $key . '" rel="footnote">' . $key . '</a></sup>';
+                $text = str_replace('[^' . $token->matches['2'] . ']', $id, $text);
+
+                $append[] = '<li id="fn-' . $key . '">' . $token->matches['3'] . '
+                    <a href="#fnref-' . $key . '" class="footnote-backref">&#8617;</a>
+                    </li>';
+            }
+
+            $append[] = '</ol></div>';
+            $text = $text . "\n\n" . preg_replace('~\s+~', ' ', implode('', $append));
+        }
+
+        return $text;
     }
 
     public function code()
@@ -162,32 +235,6 @@ class Parser
     {
         $tag = strtolower(preg_replace('~^CLOSE_|_MK$~', '', $token->type));
         return '</' . trim($tag) . '>';
-    }
-
-    protected function replaceHolders($text)
-    {
-        if (!empty($this->holder['FOOTNOTE_DEFINITION'])) {
-            $append = array('<div class="footnotes"><hr /><ol>');
-            foreach ($this->holder['FOOTNOTE_DEFINITION'] as $key => $token) {
-                $key += 1;
-                $id = '<sup id="fnref-' . $key . '"><a href="#fn-' . $key . '" rel="footnote">' . $key . '</a></sup>';
-                $text = str_replace('[^' . $token->matches['2'] . ']', $id, $text);
-
-                $append[] = '<li id="fn-' . $key . '">' . $token->matches['3'] . '
-                    <a href="#fnref-' . $key . '" class="footnote-backref">&#8617;</a>
-                    </li>';
-            }
-
-            $append[] = '</ol></div>';
-            $text = $text . "\n\n" . preg_replace('~\s+~', ' ', implode('', $append));
-        }
-
-        foreach ($this->holder['ABBR_DEFINITION'] as $key => $token) {
-            $def = '<abbr title="' . $token->matches['3'] . '">' . $token->matches['2'] . '</abbr>';
-            $text = preg_replace('~\b' . preg_quote($token->matches['2'], '\b~'). '~', $def, $text);
-        }
-
-        return $text;
     }
 
     protected function headerSetext($token)

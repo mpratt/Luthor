@@ -66,6 +66,24 @@ class TestLuthor extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $result);
     }
 
+    public function testBlockquote()
+    {
+        list($input, $expected) = $this->get('Blockquote');
+        $lex = new \Luthor\Luthor();
+
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testCodeBlock()
+    {
+        list($input, $expected) = $this->get('CodeBlock');
+        $lex = new \Luthor\Luthor();
+
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
     public function testReference()
     {
         list($input, $expected) = $this->get('Reference');
@@ -93,25 +111,7 @@ class TestLuthor extends PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testBlockquote()
-    {
-        list($input, $expected) = $this->get('Blockquote');
-        $lex = new \Luthor\Luthor();
-
-        $result = $lex->parse($input);
-        $this->assertEquals($expected, $result);
-    }
-
     /*
-    public function testCodeBlock()
-    {
-        list($input, $expected) = $this->get('CodeBlock');
-        $lex = new \Luthor\Luthor();
-
-        $result = $lex->parse($input);
-        $this->assertEquals($expected, $result);
-    }
-
     public function testList()
     {
         list($input, $expected) = $this->get('List');

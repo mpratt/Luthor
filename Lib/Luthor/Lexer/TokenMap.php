@@ -28,15 +28,16 @@ class TokenMap implements \IteratorAggregate
         '~(([\~]{2})([^\~]+)(?:[\~]{2}))~A' => 'INLINE_ELEMENT',    // Catch ~~hi~~ for striked out text
         '~(!\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A' => 'INLINE_IMG', // Inline Images
         '~(\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A' => 'INLINE_LINK', // Inline links
-        '~(\!?\[([^\]]+)\] ?\[(.*?)\])~A' => 'REFERENCE', // Image or link references [hi][id]
+        '~(\!?\[([^\]]+)\] ?\[(.*?)\])~A' => 'INLINE_REFERENCE', // Image or link references [hi][id]
         '~(\s*\[([^\]\^]+)\] ?\: ?(.+)(?:{(?:.|#).*})?)$~A' => 'REFERENCE_DEFINITION', // [id]: http...
         '~(\s*\[\^([^\^ \]]+)\] ?\: ?(.+))$~A' => 'FOOTNOTE_DEFINITION', // [^id]: Definition
         '~(\s*\*\[([^\]]+)\] ?\: ?(.+))$~A' => 'ABBR_DEFINITION', // *[id]: Definition
         '~(.+(?:=+|-+))$~A' => 'H_SETEXT', // Setext Headers
         '~(#{1,}(?:.+))~A' => 'H_ATX', // Atx type Headers
-        '~> ?~A' => 'BLOCKQUOTE_MK', // Blockquote Marker at the start of a line
+        '~> {4}> ?~A' => 'BLOCKQUOTE_INDENT_4', // Blockquote Marker at the start of a line
+        '~> ?~A' => 'BLOCKQUOTE', // Blockquote Marker at the start of a line
         // '~(([ ]{0,4})(\d+[.]|[\*\+\-])[ ])~A' => 'LIST_MK', // List block marker
-        '~ {4}~A' => 'CODEBLOCK_MK', // Code indented with 4 spaces
+        '~ {4}~A' => 'CODEBLOCK', // Code indented with 4 spaces
         '~([^\+`\[\]\(\)\{\}\*\-\=_\!\~\>]+)~A' => 'RAW', // Everything else
     );
 
