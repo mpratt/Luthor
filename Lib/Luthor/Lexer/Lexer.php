@@ -37,7 +37,7 @@ class Lexer
             'map' => new TokenMap(),
             'ignore_attr' => array('RAW'),
             'force_line_start' => array(
-                'HR', 'BLOCKQUOTE', 'CODEBLOCK', 'REFERENCE_DEFINITION',
+                'HR', 'BLOCKQUOTE', 'CODEBLOCK', 'FENCED_CODEBLOCK', 'REFERENCE_DEFINITION',
                 'FOOTNOTE_DEFINITION', 'ABBR_DEFINITION'
             ),
         ), $config);

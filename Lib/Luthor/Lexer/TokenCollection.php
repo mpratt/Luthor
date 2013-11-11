@@ -80,7 +80,7 @@ class TokenCollection implements \IteratorAggregate
         $lastBlock = end($this->blocks);
         $this->tokens[$lastBlock['coord']]->append($token);
 
-        // If the block is closed, lets seal it here too
+        // If the subblock is closed, lets seal it here too
         if (!$this->tokens[$lastBlock['coord']]->isOpen()) {
             array_pop($this->blocks);
         }
@@ -121,23 +121,6 @@ class TokenCollection implements \IteratorAggregate
         );
 
         return new Token($matches, $type, $definition->attr, $token->position, $token->line);
-    }
-
-    /**
-     * Returns a Token based on the given $key
-     *
-     * @param string $key
-     * @return object Instance of \Luthor\Lexer\Token
-     */
-    public function get($key)
-    {
-        if (isset($this->tokens[$key])) {
-            return $this->tokens[$key];
-        }
-
-        throw new \InvalidArgumentException(
-            sprintf('Invalid Key "%s"', $key)
-        );
     }
 
     /**

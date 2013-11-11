@@ -36,6 +36,7 @@ class TokenMap implements \IteratorAggregate
         '~(#{1,}(?:.+))~A' => 'H_ATX', // Atx type Headers
         '~> {4}> ?~A' => 'BLOCKQUOTE_INDENT_4', // Blockquote Marker at the start of a line
         '~> ?~A' => 'BLOCKQUOTE', // Blockquote Marker at the start of a line
+        '~```(?:{(?:.|#).*})?$~A' => 'FENCED_CODEBLOCK', // Fenced codeblock
         // '~(([ ]{0,4})(\d+[.]|[\*\+\-])[ ])~A' => 'LIST_MK', // List block marker
         '~ {4}~A' => 'CODEBLOCK', // Code indented with 4 spaces
         '~([^\+`\[\]\(\)\{\}\*\-\=_\!\~\>]+)~A' => 'RAW', // Everything else

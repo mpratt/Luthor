@@ -49,6 +49,13 @@ class TokenBlock implements \IteratorAggregate
             'on_line_start' => '',
             'transform_to' => 'RAW',
         ),
+        'FENCED_CODEBLOCK' => array(
+            'ignore' => array(),
+            'close_on' => array('FENCED_CODEBLOCK'),
+            'close_token' => 'CLOSE_CODEBLOCK',
+            'on_line_start' => '',
+            'transform_to' => 'RAW',
+        ),
     );
 
     /**

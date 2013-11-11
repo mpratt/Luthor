@@ -91,6 +91,7 @@ class Luthor
         // Append Setext type headings into the previous line
         $text = preg_replace('~([^\s]*)\n(=+|-+)[ ]*\n~', "$1\$2\n", $text);
 
+        // Add a couple of new lines at the end of the text
         return trim($text, "\n") . "\n\n";
     }
 }

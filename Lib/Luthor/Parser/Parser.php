@@ -41,7 +41,7 @@ class Parser
         ), $config);
 
         $this->operations = $this->buildOperations();
-        $this->filters = $this->footnotes = array();
+        $this->reset();
     }
 
     /**
@@ -53,6 +53,8 @@ class Parser
     {
         $headings = new Processor\Headings();
         $inline = new Processor\Inline();
+        $code = new Processor\CodeBlock();
+        $blockquote = new Processor\Blockquote();
 
         return array(
             'RAW' => function ($token) {
@@ -64,18 +66,11 @@ class Parser
             'HR' => function () {
                 return '<hr/>';
             },
-            'BLOCKQUOTE' => function () {
-                return '<blockquote>' . "\n";
-            },
-            'CLOSE_BLOCKQUOTE' => function () {
-                return '</blockquote>';
-            },
-            'CODEBLOCK' => function () {
-                return '<pre><code>' . "\n";
-            },
-            'CLOSE_CODEBLOCK' => function () {
-                return '</code></pre>' . "\n";
-            },
+            'BLOCKQUOTE' => array($blockquote, 'open'),
+            'CLOSE_BLOCKQUOTE' => array($blockquote, 'close'),
+            'CODEBLOCK' => array($code, 'open'),
+            'FENCED_CODEBLOCK' => array($code, 'openFencedBlock'),
+            'CLOSE_CODEBLOCK' => array($code, 'close'),
             'H_SETEXT' => array($headings, 'setext'),
             'H_ATX' => array($headings, 'atx'),
             'INLINE_LINK' => array($inline, 'link'),
@@ -229,8 +224,6 @@ class Parser
 
         return $text;
     }
-
-
 }
 
 ?>
