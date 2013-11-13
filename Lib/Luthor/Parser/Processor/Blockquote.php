@@ -34,7 +34,7 @@ class Blockquote
      */
     public function close()
     {
-        return '</blockquote>';
+        return '</blockquote>' . "\n\n";
     }
 }
 

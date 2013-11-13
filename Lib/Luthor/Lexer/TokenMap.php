@@ -22,6 +22,10 @@ class TokenMap implements \IteratorAggregate
     protected $tokens = array(
         '~(?:([\*] ?){3,})$~A' => 'HR', // Horizontal Rule ***
         '~(?:([\-] ?){3,})$~A' => 'HR', // Horizontal Rule ---
+        '~( {12}\- ?)~A' => 'LISTBLOCK_INDENT_12',
+        '~( {8}\- ?)~A' => 'LISTBLOCK_INDENT_8',
+        '~( {4}\- ?)~A' => 'LISTBLOCK_INDENT_4',
+        '~(\- ?)~A' => 'LISTBLOCK',
         '~(([\*]{1,2})([^\*]+)(?:[\*]{1,2}))~A' => 'INLINE_ELEMENT', // Catch **hi**
         '~(([\_]{1,2})([^_]+)(?:[_]{1,2}))~A' => 'INLINE_ELEMENT',   // Catch __hi__
         '~(([`]{1,2})([^`]+)(?:[`]{1,2}))~A' => 'INLINE_ELEMENT',    // Catch `hi`

@@ -35,10 +35,10 @@ class TokenCollection implements \IteratorAggregate
      */
     public function add(Token $token)
     {
-        $coord = $token->line . '.' . $token->position;
         if (!empty($this->blocks)) {
             $this->appendToBlock($token);
         } else {
+            $coord = $token->line . '.' . $token->position;
             $this->tokens[$coord] = $token;
         }
     }
@@ -56,7 +56,12 @@ class TokenCollection implements \IteratorAggregate
         }
 
         $coord = $token->line . '.' . $token->position;
-        $this->tokens[$coord] = new TokenBlock($token);
+        if (strpos($token->type, 'LIST') !== false) {
+            $this->tokens[$coord] = new TokenList($token);
+        } else {
+            $this->tokens[$coord] = new TokenBlock($token);
+        }
+
         $this->blocks[$token->line] = array(
             'type' => $token->type,
             'coord' => $coord,
@@ -80,8 +85,8 @@ class TokenCollection implements \IteratorAggregate
         $lastBlock = end($this->blocks);
         $this->tokens[$lastBlock['coord']]->append($token);
 
-        // If the subblock is closed, lets seal it here too
-        if (!$this->tokens[$lastBlock['coord']]->isOpen()) {
+        // If the subblock is closed, lets remove the reference we have
+        if (!$this->tokens[$lastBlock['coord']]->isOpen) {
             array_pop($this->blocks);
         }
     }
@@ -130,13 +135,6 @@ class TokenCollection implements \IteratorAggregate
      */
     public function getIterator()
     {
-        // Lets make sure we close opened blocks/subblocks
-        foreach ($this->blocks as $block) {
-            if (!empty($this->tokens[$block['coord']])) {
-                $this->tokens[$block['coord']]->close();
-            }
-        }
-
         return new \ArrayIterator($this->tokens);
     }
 }

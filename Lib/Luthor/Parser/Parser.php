@@ -64,7 +64,25 @@ class Parser
                 return "\n";
             },
             'HR' => function () {
-                return '<hr/>';
+                return "\n" . '<hr/>' . "\n";
+            },
+            'OPEN_LIST' => function ($token) {
+                return '<ul>';
+            },
+            'OPEN_LIST_ELEMENT' => function ($token) {
+                return '<li>';
+            },
+            'CLOSE_LIST_ELEMENT' => function ($token) {
+                return '</li>';
+            },
+            'CLOSE_LIST' => function ($token) {
+                return '</ul>';
+            },
+            'LISTBLOCK' => function ($token) {
+                return '<li>';
+            },
+            'CLOSE_LISTBLOCK' => function ($token) {
+                return '</li>';
             },
             'BLOCKQUOTE' => array($blockquote, 'open'),
             'CLOSE_BLOCKQUOTE' => array($blockquote, 'close'),
@@ -101,6 +119,7 @@ class Parser
     public function parse(\IteratorAggregate $collection)
     {
         $output = array();
+        print_r($collection);
         foreach ($collection as $token) {
 
             if ($token instanceof \IteratorAggregate) {
@@ -126,6 +145,8 @@ class Parser
                 $token = $collection->getDefinition($token);
             }
 
+            // Remove indent markers from the token type
+            $token->type = preg_replace('~_INDENT_(\d+)$~', '', $token->type);
             if (!isset($this->operations[$token->type])) {
                 throw new \LogicException(sprintf('Missing operation for type "%s"', $token->type));
             }
@@ -138,6 +159,13 @@ class Parser
             }
         }
 
+        /*
+        $this->addFilter(function ($text) {
+            return preg_replace('~</li>\s*</li>~m', '</li>', $text);
+        });
+        $this->addFilter(function ($text) {
+            return preg_replace('~<li>\s*</li>~m', '', $text);
+        });*/
         $output = implode("\n", $output);
         $output = $this->appendFootnotes($output);
 
