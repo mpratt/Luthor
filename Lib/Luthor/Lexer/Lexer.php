@@ -124,8 +124,8 @@ class Lexer
             }
         }
 
-        $offset += (strlen($content) - $offset);
-        return new Token($content, 'RAW', '', $offset, $line);
+        $offset += 1;
+        return new Token(substr($content, ($offset - 1), 1), 'RAW', '', $offset, $line);
     }
 
     /**

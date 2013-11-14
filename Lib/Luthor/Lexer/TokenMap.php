@@ -42,7 +42,7 @@ class TokenMap implements \IteratorAggregate
         '~> ?~A' => 'BLOCKQUOTE', // Blockquote Marker at the start of a line
         '~```(?:{(?:.|#).*})?$~A' => 'FENCED_CODEBLOCK', // Fenced codeblock
         '~ {4}~A' => 'CODEBLOCK', // Code indented with 4 spaces
-        '~([^\+`\[\]\(\)\{\}\*\-\=_\!\~\>]+)~A' => 'RAW', // Everything else
+        '~[^\+`\[\]\(\)\{\}\*\-\=_\!\~\>]+~A' => 'RAW', // Everything else
     );
 
     /**
