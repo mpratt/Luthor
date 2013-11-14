@@ -51,6 +51,7 @@ class Parser
         $blockquote = new Processor\Blockquote();
         $processor = new Processor\Processor();
         $headings = new Processor\Headings();
+        $urlEmail = new Processor\UrlEmail();
         $inline = new Processor\Inline();
         $code = new Processor\CodeBlock();
         $list = new Processor\Lists();
@@ -73,6 +74,7 @@ class Parser
             'INLINE_LINK' => array($inline, 'link'),
             'INLINE_IMG' => array($inline, 'image'),
             'INLINE_ELEMENT' => array($inline, 'span'),
+            'URL' => array($urlEmail, 'linkify'),
         );
     }
 
