@@ -302,10 +302,12 @@ class TokenBlock implements \IteratorAggregate
 
         // Add lower indent leves to trigger the end of this block
         $options['close_on'][] = $type;
-        if ($level > 0) {
+        if ($level > 1) {
             foreach (range(1, intval($level - 1)) as $num) {
                 $options['close_on'][] = $type . '_INDENT_' . $num;
             }
+
+            $options['close_on'] = array_unique($options['close_on']);
         }
 
         if (!empty($options['append_before'][$type])) {
