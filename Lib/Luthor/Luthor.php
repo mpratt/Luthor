@@ -37,12 +37,30 @@ class Luthor
      *
      * @param array $config Associative array with configuration directives
      * @return void
+     *
+     * Posible configuration options
+     * auto_p -> bool | Wether or not to automatically add "<p>" tags.
+     * auto_p_strategy -> string | The Strategy, "autoParagraph" or "autoParagraph2"
+     *                             The first one is based on wordpress wpautop and the second one
+     *                             is based on Kohanas auto_p
+     * escape -> bool | Wether or not to run htmlspecialchars before lexing/parsing
+     * max_nesting -> int | How many indentation levels are allowed/detected
+     * tab_to_spaces -> int | Converts tabs into "x" spaces
+     * indent_trigger -> int | How many spaces trigger an indent
+     * additional_reserved -> string | Add custom chars into the reserved space
+     *                                 Important for custom token creation.
+     * ignore_attr -> array | Array with token types where we should ignore attribute flags {#id} or {.class}
+     * force_line_start -> array | Array with token types that *must* only be valid when the line starts.
      */
     public function __construct(array $config = array())
     {
         $this->config = array_replace_recursive(array(
-            'tab_to_spaces' => 4,
+            'auto_p' => true,
             'escape' => false,
+            'max_nesting' => 4,
+            'tab_to_spaces' => 4,
+            'indent_trigger' => 4,
+            'additional_reserved' => ''
         ), $config);
 
         $this->tokenMap = new Lexer\TokenMap($this->config);

@@ -29,6 +29,17 @@ class Processor
     }
 
     /**
+     * Returns the Token's escaped input
+     *
+     * @param object $token
+     * @return string
+     */
+    public function escapedInput($token)
+    {
+        return trim($token->content, '\\');
+    }
+
+    /**
      * Returns a new line character
      *
      * @return string

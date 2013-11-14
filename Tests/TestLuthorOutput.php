@@ -128,6 +128,13 @@ class TestLuthor extends PHPUnit_Framework_TestCase
         $result = $lex->parse($input);
         $this->assertEquals($expected, $result);
     }
+
+    public function testReserved()
+    {
+        $lex = new \Luthor\Luthor(array('auto_p' => false));
+        $result = $lex->parse('Hey \*my name is \***Michael**\*');
+        $this->assertEquals('Hey *my name is *<strong>Michael</strong>*', $result);
+    }
 }
 
 ?>

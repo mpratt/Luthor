@@ -71,6 +71,7 @@ class Parser
 
         return array(
             'RAW' => array($processor, 'rawInput'),
+            'ESCAPED' => array($processor, 'escapedInput'),
             'LINE' => array($processor, 'newLine'),
             'HR' => array($processor, 'horizontalLine'),
             'OPEN_LIST' => array($list, 'openList'),

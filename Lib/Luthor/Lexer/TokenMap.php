@@ -37,7 +37,7 @@ class TokenMap implements \IteratorAggregate
     {
         $this->config = array_replace_recursive(array(
             'max_nesting' => 4,
-            'indent_trigger' => 4, // how many spaces trigger an indent
+            'indent_trigger' => 4,
             'additional_reserved' => ''
         ), $config);
 
@@ -172,7 +172,7 @@ class TokenMap implements \IteratorAggregate
         }
 
         return array(
-            //'~\\\\([' . implode('|', $escaped) . '])~A' => 'ESCAPED',
+            '~\\\\([' . implode('|', $escaped) . '])~A' => 'ESCAPED',
             '~[^' . implode('', $escaped) . ']+~A' => 'RAW',
         );
     }
