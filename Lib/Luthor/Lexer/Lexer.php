@@ -35,7 +35,7 @@ class Lexer
      */
     public function __construct(array $config = array())
     {
-        $this->collection = new TokenCollection();
+        $this->collection = new TokenCollection($this->config);
         $this->config = array_replace_recursive(array(
             'ignore_attr' => array('RAW'),
             'force_line_start' => array(

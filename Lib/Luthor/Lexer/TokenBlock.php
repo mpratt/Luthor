@@ -31,6 +31,9 @@ class TokenBlock implements \IteratorAggregate
     /** @var bool The state of this block **/
     public $isOpen = true;
 
+    /** @var array Configuration Directives */
+    protected $config = array();
+
     /** @var string The initial type of this block */
     protected $type;
 
@@ -98,12 +101,14 @@ class TokenBlock implements \IteratorAggregate
      * Construct
      *
      * @param object Instance of \Luthor\Lexer\Token
+     * @param array $config
      * @param bool $hasParent Wether or not this particular subblock has a parent
      * @return void
      */
-    public function __construct(Token $token, $hasParent = false)
+    public function __construct(Token $token, array $config = array(), $hasParent = false)
     {
         $this->type = $token->type;
+        $this->config = $config;
         $this->hasParent = $hasParent;
         $this->isIndentation = preg_match('~_INDENT_(\d+)$~', $this->type, $m);
         $this->indentLevel = (!empty($m['1']) ? $m['1'] : 0);
@@ -165,7 +170,7 @@ class TokenBlock implements \IteratorAggregate
 
         // If the token is an indent token, different from this same type, open a new block
         if (preg_match('~_INDENT_~', $token->type) && $token->type != $this->type) {
-            $this->tokens[] = new TokenBlock($token, true);
+            $this->tokens[] = new TokenBlock($token, $this->config, true);
             $this->subBlocks[] = (count($this->tokens) - 1);
         } else {
 

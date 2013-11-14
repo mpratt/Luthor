@@ -27,6 +27,20 @@ class TokenCollection implements \IteratorAggregate
     /** @var array With Tokens */
     protected $tokens = array();
 
+    /** @var array Configuration Directives */
+    protected $config = array();
+
+    /**
+     * Construct
+     *
+     * @param array $config
+     * @return void
+     */
+    public function __construct(array $config = array())
+    {
+        $this->config = $config;
+    }
+
     /**
      * Appends a new Token into the $tokens property
      *
@@ -56,7 +70,7 @@ class TokenCollection implements \IteratorAggregate
         }
 
         $coord = $token->line . '.' . $token->position;
-        $this->tokens[$coord] = new TokenBlock($token);
+        $this->tokens[$coord] = new TokenBlock($token, $this->config);
         $this->blocks[$token->line] = array(
             'type' => $token->type,
             'coord' => $coord,
