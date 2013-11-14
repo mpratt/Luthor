@@ -20,6 +20,9 @@ class Parser
     /** @var Instance of \Luthor\Lexer\TokenCollection */
     protected $collection;
 
+    /** @var array Array with configuration directives */
+    protected $config = array();
+
     /** @var array Array with filters */
     protected $filters = array();
 
@@ -37,7 +40,17 @@ class Parser
      */
     public function __construct(array $config = array())
     {
-        $this->config = $config;
+        $this->config = array_replace_recursive(array(
+            'auto_p' => true,
+            'auto_p_strategy' => 'autoParagraph'
+        ), $config);
+
+        if ($this->config['auto_p']){
+            $this->filters = array(
+                array(new Filters\Paragraph, $this->config['auto_p_strategy']),
+            );
+        }
+
         $this->operations = $this->buildDefaultOperations();
     }
 

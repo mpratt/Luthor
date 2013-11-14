@@ -24,7 +24,7 @@ class Blockquote
      */
     public function open()
     {
-        return '<blockquote>' . "\n";
+        return '<blockquote>' . "\n\n";
     }
 
     /**
@@ -34,7 +34,7 @@ class Blockquote
      */
     public function close()
     {
-        return '</blockquote>' . "\n\n";
+        return "\n\n" . '</blockquote>' . "\n\n";
     }
 }
 

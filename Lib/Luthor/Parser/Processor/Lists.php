@@ -24,7 +24,7 @@ class Lists
      */
     public function openList()
     {
-        return '<ul>';
+        return '<ul>' . "\n\n";
     }
 
     /**
@@ -34,7 +34,7 @@ class Lists
      */
     public function closeList()
     {
-        return '</ul>';
+        return '</ul>' . "\n\n";
     }
 
     /**
@@ -44,7 +44,7 @@ class Lists
      */
     public function openElement()
     {
-        return '<li>';
+        return '<li>' . "\n\n";
     }
 
     /**
@@ -54,7 +54,7 @@ class Lists
      */
     public function closeElement()
     {
-        return '</li>';
+        return "\n\n" . '</li>' . "\n\n";
     }
 }
 
