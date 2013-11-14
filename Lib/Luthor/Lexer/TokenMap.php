@@ -43,6 +43,7 @@ class TokenMap implements \IteratorAggregate
         '~```(?:{(?:.|#).*})?$~A' => 'FENCED_CODEBLOCK', // Fenced codeblock
         '~ {4}~A' => 'CODEBLOCK', // Code indented with 4 spaces
         '~(<https?://[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/))>)~iA' => 'URL',
+        '~(<(?:mailto:)?[^ ]+@[^ ]+>)~A' => 'EMAIL',
         '~[^\+`\[\]\(\)\{\}\*\-\=_\!\~\>\<]+~A' => 'RAW', // Everything else
     );
 

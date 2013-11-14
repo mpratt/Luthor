@@ -75,6 +75,7 @@ class Parser
             'INLINE_IMG' => array($inline, 'image'),
             'INLINE_ELEMENT' => array($inline, 'span'),
             'URL' => array($urlEmail, 'linkify'),
+            'EMAIL' => array($urlEmail, 'email'),
         );
     }
 
