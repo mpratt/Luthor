@@ -31,7 +31,7 @@ class Headings
             return '<h' . $h . '>' . rtrim($token->content, ' -=') . '</h' . $h . '>';
         }
 
-        return '<h' . $h . ' ' . $token->attr . '>' . rtrim($token->content, ' -=') . '</h' . $h . '>';
+        return '<h' . $h . ' ' . $token->attr . '>' . rtrim($token->content, ' -=') . '</h' . $h . '>' . "\n\n";
     }
 
     /**
@@ -50,7 +50,7 @@ class Headings
             return '<h' . $h . '>' . trim($content, ' #') . '</h' . $h . '>';
         }
 
-        return '<h' . $h . ' ' . $token->attr . '>' . rtrim($content, ' #') . '</h' . $h . '>';
+        return '<h' . $h . ' ' . $token->attr . '>' . rtrim($content, ' #') . '</h' . $h . '>' . "\n\n";
     }
 }
 

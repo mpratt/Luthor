@@ -29,7 +29,7 @@ class TokenMap implements \IteratorAggregate
         '~(([\*]{1,2})([^\*]+)(?:[\*]{1,2}))~A' => 'INLINE_ELEMENT', // Catch **hi**
         '~(([\_]{1,2})([^_]+)(?:[_]{1,2}))~A' => 'INLINE_ELEMENT',   // Catch __hi__
         '~(([`]{1,2})([^`]+)(?:[`]{1,2}))~A' => 'INLINE_ELEMENT',    // Catch `hi`
-        '~(([\~]{2})([^\~]+)(?:[\~]{2}))~A' => 'INLINE_ELEMENT',    // Catch ~~hi~~ for striked out text
+        '~(([\~]{2})([^\~]+)(?:[\~]{2}))~A' => 'INLINE_ELEMENT',     // Catch ~~hi~~ for striked out text
         '~(!\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A' => 'INLINE_IMG', // Inline Images
         '~(\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A' => 'INLINE_LINK', // Inline links
         '~(\!?\[([^\]]+)\] ?\[(.*?)\])~A' => 'INLINE_REFERENCE', // Image or link references [hi][id]
@@ -41,7 +41,6 @@ class TokenMap implements \IteratorAggregate
         '~> {4}> ?~A' => 'BLOCKQUOTE_INDENT_4', // Blockquote Marker at the start of a line
         '~> ?~A' => 'BLOCKQUOTE', // Blockquote Marker at the start of a line
         '~```(?:{(?:.|#).*})?$~A' => 'FENCED_CODEBLOCK', // Fenced codeblock
-        // '~(([ ]{0,4})(\d+[.]|[\*\+\-])[ ])~A' => 'LIST_MK', // List block marker
         '~ {4}~A' => 'CODEBLOCK', // Code indented with 4 spaces
         '~([^\+`\[\]\(\)\{\}\*\-\=_\!\~\>]+)~A' => 'RAW', // Everything else
     );

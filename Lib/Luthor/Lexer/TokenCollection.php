@@ -56,12 +56,7 @@ class TokenCollection implements \IteratorAggregate
         }
 
         $coord = $token->line . '.' . $token->position;
-        if (strpos($token->type, 'LIST') !== false) {
-            $this->tokens[$coord] = new TokenList($token);
-        } else {
-            $this->tokens[$coord] = new TokenBlock($token);
-        }
-
+        $this->tokens[$coord] = new TokenBlock($token);
         $this->blocks[$token->line] = array(
             'type' => $token->type,
             'coord' => $coord,
@@ -85,7 +80,7 @@ class TokenCollection implements \IteratorAggregate
         $lastBlock = end($this->blocks);
         $this->tokens[$lastBlock['coord']]->append($token);
 
-        // If the subblock is closed, lets remove the reference we have
+        // If the subblock is closed, lets remove the reference we have here too
         if (!$this->tokens[$lastBlock['coord']]->isOpen) {
             array_pop($this->blocks);
         }

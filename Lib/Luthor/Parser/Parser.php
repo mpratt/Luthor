@@ -37,53 +37,32 @@ class Parser
      */
     public function __construct(array $config = array())
     {
-        $this->config = array_replace_recursive(array(
-        ), $config);
-
-        $this->operations = $this->buildOperations();
-        $this->reset();
+        $this->config = $config;
+        $this->operations = $this->buildDefaultOperations();
     }
 
     /**
-     * Maps tokens to their relevant operation/processor function.
+     * Maps tokens to their relevant operation/processor function/method.
      *
      * @return array with token -> operation relationship
      */
-    protected function buildOperations()
+    protected function buildDefaultOperations()
     {
+        $blockquote = new Processor\Blockquote();
+        $processor = new Processor\Processor();
         $headings = new Processor\Headings();
         $inline = new Processor\Inline();
         $code = new Processor\CodeBlock();
-        $blockquote = new Processor\Blockquote();
+        $list = new Processor\Lists();
 
         return array(
-            'RAW' => function ($token) {
-                return $token->content;
-            },
-            'LINE' => function () {
-                return "\n";
-            },
-            'HR' => function () {
-                return "\n" . '<hr/>' . "\n";
-            },
-            'OPEN_LIST' => function ($token) {
-                return '<ul>';
-            },
-            'OPEN_LIST_ELEMENT' => function ($token) {
-                return '<li>';
-            },
-            'CLOSE_LIST_ELEMENT' => function ($token) {
-                return '</li>';
-            },
-            'CLOSE_LIST' => function ($token) {
-                return '</ul>';
-            },
-            'LISTBLOCK' => function ($token) {
-                return '<li>';
-            },
-            'CLOSE_LISTBLOCK' => function ($token) {
-                return '</li>';
-            },
+            'RAW' => array($processor, 'rawInput'),
+            'LINE' => array($processor, 'newLine'),
+            'HR' => array($processor, 'horizontalLine'),
+            'OPEN_LIST' => array($list, 'openList'),
+            'CLOSE_LIST' => array($list, 'closeList'),
+            'LISTBLOCK' => array($list, 'openElement'),
+            'CLOSE_LIST_ELEMENT' => array($list, 'closeElement'),
             'BLOCKQUOTE' => array($blockquote, 'open'),
             'CLOSE_BLOCKQUOTE' => array($blockquote, 'close'),
             'CODEBLOCK' => array($code, 'open'),
@@ -114,12 +93,13 @@ class Parser
      *
      * @param object $collection Instance of \IteratorAggregate
      * @return string
+     *
      * @throws LogicException When there is no available operation for a token
      */
     public function parse(\IteratorAggregate $collection)
     {
         $output = array();
-        print_r($collection);
+        //print_r($collection);
         foreach ($collection as $token) {
 
             if ($token instanceof \IteratorAggregate) {
@@ -159,13 +139,6 @@ class Parser
             }
         }
 
-        /*
-        $this->addFilter(function ($text) {
-            return preg_replace('~</li>\s*</li>~m', '</li>', $text);
-        });
-        $this->addFilter(function ($text) {
-            return preg_replace('~<li>\s*</li>~m', '', $text);
-        });*/
         $output = implode("\n", $output);
         $output = $this->appendFootnotes($output);
 
@@ -173,7 +146,7 @@ class Parser
     }
 
     /**
-     * Determines the operation to be run for the given token
+     * Determines the operation to be run for the given token/string
      *
      * @param mixed $operation Closure, method name or other callable function
      * @param object $token
@@ -214,16 +187,6 @@ class Parser
     public function addFilter(callable $func)
     {
         $this->filters[] = $func;
-    }
-
-    /**
-     * Resets the filters/footnotes properties
-     *
-     * @return void
-     */
-    public function reset()
-    {
-        $this->filters = $this->footnotes = array();
     }
 
     /**
