@@ -115,7 +115,7 @@ class TokenBlock implements \IteratorAggregate
         $this->isOpen = true;
 
         if ($this->isIndentation) {
-            $this->createIndentationRules($this->indentLevel);
+            $this->createIndentationRules();
         }
 
         foreach ($this->blocks[$this->getParentType()]['on_creation'] as $type) {
@@ -130,7 +130,7 @@ class TokenBlock implements \IteratorAggregate
      * well it sounds simple, but its not quite that way, since it
      * works recursively..
      *
-     * @param object Instance of \Luthor\Lexer\Token
+     * @param object $token Instance of \Luthor\Lexer\Token
      * @param bool $appendOnClose, wether or not we should append the closing token at the end
      * @return void
      */
@@ -260,6 +260,7 @@ class TokenBlock implements \IteratorAggregate
     /**
      * Gets the current type of this block
      *
+     * @param bool $real Wether or not to return the *REAL* type
      * @return string
      */
     public function getParentType($real = false)
@@ -277,7 +278,7 @@ class TokenBlock implements \IteratorAggregate
      *
      * @return void
      */
-    protected function createIndentationRules($level = 0)
+    protected function createIndentationRules()
     {
         $type = $this->getParentType();
         $options = array(
@@ -307,8 +308,8 @@ class TokenBlock implements \IteratorAggregate
 
         // Add lower indent leves to trigger the end of this block
         $options['close_on'][] = $type;
-        if ($level > 1) {
-            foreach (range(1, intval($level - 1)) as $num) {
+        if ($this->indentLevel > 1) {
+            foreach (range(1, intval($this->indentLevel - 1)) as $num) {
                 $options['close_on'][] = $type . '_INDENT_' . $num;
             }
 
@@ -329,6 +330,8 @@ class TokenBlock implements \IteratorAggregate
     /**
      * Closes the current block and its childs
      *
+     * @param mixed $token
+     * @param bool $appendOnClose, wether or not we should append the closing token at the end
      * @return void
      */
     public function close($token = null, $appendOnClose = true)

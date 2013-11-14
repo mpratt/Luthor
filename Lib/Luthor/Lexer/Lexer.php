@@ -94,7 +94,7 @@ class Lexer
      *
      * @param string $content
      * @param int $offset Passed by Reference
-     * @param int line
+     * @param int $line
      * @return object Instance of \Luthor\Lexer\Token
      */
     protected function match($content, &$offset, $line)
