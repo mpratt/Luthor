@@ -54,10 +54,6 @@ class UrlEmail
      */
     protected function encodeEmail($email)
     {
-        if (empty($email)) {
-            return ;
-        }
-
         $chars = str_split($email);
         $output = array();
         foreach ($chars as $key => $char) {

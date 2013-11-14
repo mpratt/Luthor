@@ -21,6 +21,15 @@ class TestLuthor extends PHPUnit_Framework_TestCase
         return $out;
     }
 
+    public function testList()
+    {
+        list($input, $expected) = $this->get('List');
+        $lex = new \Luthor\Luthor();
+
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
     public function testHeadings()
     {
         list($input, $expected) = $this->get('Headings');
@@ -105,15 +114,6 @@ class TestLuthor extends PHPUnit_Framework_TestCase
     public function testAbbr()
     {
         list($input, $expected) = $this->get('Abbr');
-        $lex = new \Luthor\Luthor();
-
-        $result = $lex->parse($input);
-        $this->assertEquals($expected, $result);
-    }
-
-    public function testList()
-    {
-        list($input, $expected) = $this->get('List');
         $lex = new \Luthor\Luthor();
 
         $result = $lex->parse($input);

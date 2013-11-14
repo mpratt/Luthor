@@ -41,7 +41,7 @@ class Luthor
     public function __construct(array $config = array())
     {
         $this->config = array_replace_recursive(array(
-            'tab_width' => 4,
+            'tab_to_spaces' => 4,
             'escape' => false,
         ), $config);
 
@@ -85,7 +85,7 @@ class Luthor
     {
         $text = preg_replace('~^\xEF\xBB\xBF|\x1A~', '', $text);
         $text = preg_replace('~\r\n?~', "\n", $text);
-        $text = preg_replace('~\t~', str_repeat(' ', $this->config['tab_width']), $text);
+        $text = preg_replace('~\t~', str_repeat(' ', $this->config['tab_to_spaces']), $text);
         $text = preg_replace('~^[ ]+$~', '', $text);
 
         if ($this->config['escape']) {

@@ -18,43 +18,30 @@ namespace Luthor\Lexer;
  */
 class TokenMap implements \IteratorAggregate
 {
+    /** @var string Chars reserved by markdown */
+    const MARKDOWN_RESERVED = '\\`*_{}[]()#+-.!';
+
+    /** @var string Chars reserved by Luthor */
+    const LUTHOR_RESERVED = '<>=~';
+
     /** @var Array With regex and token name relation */
-    protected $tokens = array(
-        '~(?:([\*] ?){3,})$~A' => 'HR', // Horizontal Rule ***
-        '~(?:([\-] ?){3,})$~A' => 'HR', // Horizontal Rule ---
-        '~( {12}\- ?)~A' => 'LISTBLOCK_INDENT_12',
-        '~( {8}\- ?)~A' => 'LISTBLOCK_INDENT_8',
-        '~( {4}\- ?)~A' => 'LISTBLOCK_INDENT_4',
-        '~(\- ?)~A' => 'LISTBLOCK',
-        '~(([\*]{1,2})([^\*]+)(?:[\*]{1,2}))~A' => 'INLINE_ELEMENT', // Catch **hi**
-        '~(([\_]{1,2})([^_]+)(?:[_]{1,2}))~A' => 'INLINE_ELEMENT',   // Catch __hi__
-        '~(([`]{1,2})([^`]+)(?:[`]{1,2}))~A' => 'INLINE_ELEMENT',    // Catch `hi`
-        '~(([\~]{2})([^\~]+)(?:[\~]{2}))~A' => 'INLINE_ELEMENT',     // Catch ~~hi~~ for striked out text
-        '~(!\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A' => 'INLINE_IMG', // Inline Images
-        '~(\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A' => 'INLINE_LINK', // Inline links
-        '~(\!?\[([^\]]+)\] ?\[(.*?)\])~A' => 'INLINE_REFERENCE', // Image or link references [hi][id]
-        '~(\s*\[([^\]\^]+)\] ?\: ?(.+)(?:{(?:.|#).*})?)$~A' => 'REFERENCE_DEFINITION', // [id]: http...
-        '~(\s*\[\^([^\^ \]]+)\] ?\: ?(.+))$~A' => 'FOOTNOTE_DEFINITION', // [^id]: Definition
-        '~(\s*\*\[([^\]]+)\] ?\: ?(.+))$~A' => 'ABBR_DEFINITION', // *[id]: Definition
-        '~(.+(?:=+|-+))$~A' => 'H_SETEXT', // Setext Headers
-        '~(#{1,}(?:.+))~A' => 'H_ATX', // Atx type Headers
-        '~> {4}> ?~A' => 'BLOCKQUOTE_INDENT_4', // Blockquote Marker at the start of a line
-        '~> ?~A' => 'BLOCKQUOTE', // Blockquote Marker at the start of a line
-        '~```(?:{(?:.|#).*})?$~A' => 'FENCED_CODEBLOCK', // Fenced codeblock
-        '~ {4}~A' => 'CODEBLOCK', // Code indented with 4 spaces
-        '~(<https?://[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/))>)~iA' => 'URL',
-        '~(<(?:mailto:)?[^ ]+@[^ ]+>)~A' => 'EMAIL',
-        '~[^\+`\[\]\(\)\{\}\*\-\=_\!\~\>\<]+~A' => 'RAW', // Everything else
-    );
+    protected $rules = array();
 
     /**
      * Construct
      *
+     * @param array $config
      * @return void
      */
     public function __construct(array $config = array())
     {
-        $this->config = $config;
+        $this->config = array_replace_recursive(array(
+            'max_nesting' => 4,
+            'indent_trigger' => 4, // how many spaces trigger an indent
+            'additional_reserved' => ''
+        ), $config);
+
+        $this->rules = $this->buildRules();
     }
 
     /**
@@ -68,9 +55,125 @@ class TokenMap implements \IteratorAggregate
      */
     public function add($rule, $token)
     {
-        $this->tokens = array_merge(
+        // Prepend the new rule
+        $this->rules = array_merge(
             array($rule => strtoupper($token)),
-            $this->tokens
+            $this->rules
+        );
+    }
+
+    /**
+     * Builds the regex taking into account
+     * the given configuration directives.
+     *
+     * @return array
+     */
+    protected function buildRules()
+    {
+        $nesting = (int) $this->config['max_nesting'];
+        $indent  = (int) $this->config['indent_trigger'];
+
+        if ($nesting < 0) {
+            $nesting = 0;
+        }
+
+        if ($indent <= 1) {
+            $indent = 4;
+        }
+
+        $rules = array();
+
+        // Horizontal Rule ***
+        $rules['~(?:([\*] ?){3,})$~A'] = 'HR';
+
+        // Horizontal Rule ---
+        $rules['~(?:([\-] ?){3,})$~A'] = 'HR';
+
+        // Generate LISTBLOCK indents
+        for ($i = $nesting; $i > 0; $i--) {
+            $num = ($i*$indent);
+            $rules['~( {' . $num . '}\- ?)~A'] = 'LISTBLOCK_INDENT_' . $i;
+        }
+        $rules['~(\- ?)~A'] = 'LISTBLOCK';
+
+        // Catch **hi**
+        $rules['~(([\*]{1,2})([^\*]+)(?:[\*]{1,2}))~A'] = 'INLINE_ELEMENT';
+
+        // Catch __hi__
+        $rules['~(([\_]{1,2})([^_]+)(?:[_]{1,2}))~A'] = 'INLINE_ELEMENT';
+
+        // Catch `hi`
+        $rules['~(([`]{1,2})([^`]+)(?:[`]{1,2}))~A'] = 'INLINE_ELEMENT';
+
+        // Catch ~~hi~~ for striked out text
+        $rules['~(([\~]{2})([^\~]+)(?:[\~]{2}))~A'] = 'INLINE_ELEMENT';
+
+        // Inline Images
+        $rules['~(!\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A'] = 'INLINE_IMG';
+
+        // Inline links
+        $rules['~(\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A'] = 'INLINE_LINK';
+
+        // Image or link references [hi][id]
+        $rules['~(\!?\[([^\]]+)\] ?\[(.*?)\])~A'] = 'INLINE_REFERENCE';
+
+        // [id]: http...
+        $rules['~(\s*\[([^\]\^]+)\] ?\: ?(.+)(?:{(?:.|#).*})?)$~A'] = 'REFERENCE_DEFINITION';
+
+        // [^id]: Definition
+        $rules['~(\s*\[\^([^\^ \]]+)\] ?\: ?(.+))$~A'] = 'FOOTNOTE_DEFINITION';
+
+        // *[id]: Definition
+        $rules['~(\s*\*\[([^\]]+)\] ?\: ?(.+))$~A'] = 'ABBR_DEFINITION';
+
+        // Setext Headers
+        $rules['~(.+(?:=+|-+))$~A'] = 'H_SETEXT';
+
+        // Atx type Headers
+        $rules['~(#{1,}(?:.+))~A'] = 'H_ATX';
+
+        // Generate Blockquote indents
+        for ($i = $nesting; $i > 0; $i--) {
+            $num = ($i*$indent);
+            $rules['~>(?:[ ]{' . $num . '})> ?~A'] = 'BLOCKQUOTE_INDENT_' . $i;
+        }
+        $rules['~> ?~A'] = 'BLOCKQUOTE';
+
+        // Generate Block code rules
+        $rules['~```(?:{(?:.|#).*})?$~A'] = 'FENCED_CODEBLOCK';
+        $rules['~ {' . $indent . '}~A'] = 'CODEBLOCK';
+
+        // <email@domain.com>
+        $rules['~(<(?:mailto:)?[^ ]+@[^ ]+>)~A'] = 'EMAIL';
+
+        // <https://link.com>
+        $rules['~(<https?://[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/))>)~iA'] = 'URL';
+
+        // Add RAW token rules and escapes at the end
+        return array_merge($rules, $this->buildRawRules());
+    }
+
+    /**
+     * Builds the RAW and ESCAPED token regex.
+     * Takes into account configuration directives.
+     *
+     * @return array
+     */
+    protected function buildRawRules()
+    {
+        $reserved = self::MARKDOWN_RESERVED;
+        $reserved .= self::LUTHOR_RESERVED;
+        $reserved .= $this->config['additional_reserved'];
+        $chars = array_unique(str_split($reserved));
+
+        $escaped = array();
+        foreach ($chars as $c){
+            $escaped[] = preg_quote($c, '~');
+        }
+
+        return array(
+            //'~\\\\([' . implode('|', $escaped) . '])~A' => 'ESCAPED',
+            '~[^' . implode('', $escaped) . ']+~A' => 'RAW',
         );
     }
 
@@ -81,8 +184,7 @@ class TokenMap implements \IteratorAggregate
      */
     public function getIterator()
     {
-        return new \ArrayIterator($this->tokens);
+        return new \ArrayIterator($this->rules);
     }
 }
-
 ?>
