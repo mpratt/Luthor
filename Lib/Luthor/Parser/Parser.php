@@ -76,6 +76,8 @@ class Parser
             'HR' => array($processor, 'horizontalLine'),
             'OPEN_LIST' => array($list, 'openList'),
             'CLOSE_LIST' => array($list, 'closeList'),
+            'OPEN_ORDERED_LIST' => array($list, 'openOrderedList'),
+            'CLOSE_ORDERED_LIST' => array($list, 'closeOrderedList'),
             'LISTBLOCK' => array($list, 'openElement'),
             'CLOSE_LIST_ELEMENT' => array($list, 'closeElement'),
             'BLOCKQUOTE' => array($blockquote, 'open'),

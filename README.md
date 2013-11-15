@@ -18,7 +18,7 @@ Here is a quick list of supported markup:
 - Headers
 - Blockquotes
 - Code blocks and Fenced code blocks
-- Lists
+- Lists (starting with `-`, `+`, or `1.`)
 - Horizontal Rules
 - Span Elements (links, emphasis, code, images, striked out text)
 - Element Escaping

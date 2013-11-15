@@ -83,9 +83,9 @@ class TokenMap implements \IteratorAggregate
         // Generate LISTBLOCK indents
         for ($i = $nesting; $i > 0; $i--) {
             $num = ($i*$indent);
-            $rules['~( {' . $num . '}\- ?)~A'] = 'LISTBLOCK_INDENT_' . $i;
+            $rules['~( {' . $num . '}([\-\+]|(\d)+\.) ?)~A'] = 'LISTBLOCK_INDENT_' . $i;
         }
-        $rules['~(\- ?)~A'] = 'LISTBLOCK';
+        $rules['~(([\-\+]|(\d)+\.) ?)~A'] = 'LISTBLOCK';
 
         // Catch **hi**
         $rules['~(([\*]{1,2})([^\*]+)(?:[\*]{1,2}))~A'] = 'INLINE_ELEMENT';

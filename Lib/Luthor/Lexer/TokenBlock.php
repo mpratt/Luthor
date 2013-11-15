@@ -57,6 +57,7 @@ class TokenBlock implements \IteratorAggregate
                 'LISTBLOCK' => array('CLOSE_LIST_ELEMENT'),
                 'LINE' => array('CLOSE_LIST_ELEMENT'),
                 'CLOSE_LIST' => array('CLOSE_LIST_ELEMENT'),
+                'CLOSE_ORDERED_LIST' => array('CLOSE_LIST_ELEMENT'),
             ),
             'append_after' => array(),
             'transform_to' => array(
@@ -113,6 +114,19 @@ class TokenBlock implements \IteratorAggregate
         $this->isIndentation = preg_match('~_INDENT_(\d+)$~', $this->type, $m);
         $this->indentLevel = (!empty($m['1']) ? $m['1'] : 0);
         $this->isOpen = true;
+
+        // Manage Ordered/Unordered Lists
+        if (strpos($token->type, 'LISTBLOCK') !== false &&
+            preg_match('~^\d+\.$~', trim($token->content)))
+        {
+            $this->blocks[$this->getParentType()]['on_creation'] = array(
+                'OPEN_ORDERED_LIST'
+            );
+
+            $this->blocks[$this->getParentType()]['close_token'] = array(
+                'CLOSE_ORDERED_LIST'
+            );
+        }
 
         if ($this->isIndentation) {
             $this->createIndentationRules();

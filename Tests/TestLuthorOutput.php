@@ -23,7 +23,16 @@ class TestLuthorOutput extends PHPUnit_Framework_TestCase
 
     public function testList()
     {
-        list($input, $expected) = $this->get('List');
+        list($input, $expected) = $this->get('ListLevels');
+        $lex = new \Luthor\Luthor();
+
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testListTypes()
+    {
+        list($input, $expected) = $this->get('ListTypes');
         $lex = new \Luthor\Luthor();
 
         $result = $lex->parse($input);

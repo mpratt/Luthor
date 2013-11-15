@@ -34,7 +34,27 @@ class Lists
      */
     public function closeList()
     {
-        return '</ul>' . "\n\n";
+        return "\n\n" . '</ul>' . "\n\n";
+    }
+
+    /**
+     * Opens a new ordered list
+     *
+     * @return string
+     */
+    public function openOrderedList()
+    {
+        return '<ol>' . "\n\n";
+    }
+
+    /**
+     * Closes an ordered list
+     *
+     * @return string
+     */
+    public function closeOrderedList()
+    {
+        return "\n\n" . '</ol>' . "\n\n";
     }
 
     /**
