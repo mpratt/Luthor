@@ -291,19 +291,7 @@ class TokenBlock implements \IteratorAggregate
     protected function createIndentationRules()
     {
         $type = $this->getParentType();
-        $options = array(
-            'ignore' => array(),
-            'close_on' => array('LINE'),
-            'close_token' => array(),
-            'on_creation' => array(),
-            'append_before' => array(),
-            'append_after' => array(),
-            'transform_to' => '',
-        );
-
-        if (!empty($this->blocks[$type])) {
-            $options = $this->blocks[$type];
-        }
+        $options = $this->blocks[$type];
 
         if (preg_match('~BLOCKQUOTE~', $this->type)) {
             $options['ignore'] = array_merge(
@@ -392,7 +380,9 @@ class TokenBlock implements \IteratorAggregate
             'close_on' => array('LINE'),
             'close_token' => array('CLOSE_' . $type),
             'on_creation' => array(),
-            'transform_to' => '',
+            'append_before' => array(),
+            'append_after' => array(),
+            'transform_to' => array(),
         ), $options);
     }
 
