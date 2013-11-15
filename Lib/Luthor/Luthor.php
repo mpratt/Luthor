@@ -135,6 +135,18 @@ class Luthor
     }
 
     /**
+     * Overwrites a token operation
+     *
+     * @param string $token token name
+     * @param callable $operation the functiont to be called on the found token
+     * @return void
+     */
+    public function overwriteOperation($token, callable $operation)
+    {
+        $this->parser->addOperation($token, $operation);
+    }
+
+    /**
      * Adds a new filter into the parser
      *
      * @param mixed $func A Callable function/method to be used as a filter

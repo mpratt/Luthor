@@ -57,7 +57,7 @@ class TokenMap implements \IteratorAggregate
     {
         // Prepend the new rule
         $this->rules = array_merge(
-            array($rule => strtoupper($token)),
+            array('~' . $rule . '~A' => strtoupper($token)),
             $this->rules
         );
     }

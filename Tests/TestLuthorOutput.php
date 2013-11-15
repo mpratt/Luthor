@@ -1,6 +1,6 @@
 <?php
 /**
- * TestLuthor.php
+ * TestLuthorOutput.php
  *
  * @author  Michael Pratt <pratt@hablarmierda.net>
  * @link    http://www.michael-pratt.com/
@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-class TestLuthor extends PHPUnit_Framework_TestCase
+class TestLuthorOutput extends PHPUnit_Framework_TestCase
 {
     protected function get($file)
     {

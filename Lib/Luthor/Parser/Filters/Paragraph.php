@@ -52,10 +52,6 @@ class Paragraph
      */
     public function autoParagraph($text)
     {
-        if (trim($text) === '') {
-            return '';
-        }
-
         // Reserve content that should not be trimmed
         $text = $this->reserve($text);
 
@@ -119,10 +115,6 @@ class Paragraph
      */
     public function autoParagraph2($text)
     {
-        if (($text = trim($text)) === '') {
-            return '';
-        }
-
         // Trim starting whitespace on each line
         $text = preg_replace('~^[ \t]+~m', '', $text);
         //$text = preg_replace('~[ \t]+$~m', '', $str);
@@ -131,8 +123,8 @@ class Paragraph
         if ($html_found = (strpos($text, '<') !== false))
         {
             // Put at least two linebreaks before and after $thi->blocks elements
-            $text = preg_replace('~^<'.$thi->blocks.'[^>]*+>~im', "\n$0", $text);
-            $text = preg_replace('~</'.$thi->blocks.'\s*+>$~im', "$0\n", $text);
+            $text = preg_replace('~^<'.$this->blocks.'[^>]*+>~im', "\n$0", $text);
+            $text = preg_replace('~</'.$this->blocks.'\s*+>$~im', "$0\n", $text);
         }
 
         // Do the <p> magic!
@@ -143,8 +135,8 @@ class Paragraph
         if ($html_found !== false)
         {
             // Remove p tags around $thi->blocks elements
-            $text = preg_replace('~<p>(?=</?'.$thi->blocks.'[^>]*+>)~i', '', $text);
-            $text = preg_replace('~(</?'.$thi->blocks.'[^>]*+>)</p>~i', '$1', $text);
+            $text = preg_replace('~<p>(?=</?'.$this->blocks.'[^>]*+>)~i', '', $text);
+            $text = preg_replace('~(</?'.$this->blocks.'[^>]*+>)</p>~i', '$1', $text);
         }
 
         // Add <br/> on lines ending with 2 spaces

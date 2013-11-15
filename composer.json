@@ -1,8 +1,8 @@
 {
     "name": "mpratt/luthor",
     "type": "library",
-    "description": "",
-    "keywords": ["Markdown", "Lexer", "Parser", "md", "Mark down"],
+    "description": "An extendable Markdown Lexer/Parser for PHP",
+    "keywords": ["Markdown", "Lexer", "Parser", "md", "Mark down", "extendable markdown"],
     "homepage": "https://github.com/mpratt/Luthor",
     "license": "MIT",
     "authors": [

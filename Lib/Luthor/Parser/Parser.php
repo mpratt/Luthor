@@ -172,7 +172,7 @@ class Parser
     protected function run($operation, $token)
     {
         if (is_callable($operation)) {
-            return $operation($token);
+            return call_user_func($operation, $token);
         } elseif ($token instanceof \Luthor\Lexer\Token) {
             return $token->content;
         }
