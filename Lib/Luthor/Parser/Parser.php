@@ -86,6 +86,7 @@ class Parser
             'H_SETEXT' => array($headings, 'setext'),
             'H_ATX' => array($headings, 'atx'),
             'INLINE_LINK' => array($inline, 'link'),
+            'INLINE_IMG_LINK' => array($inline, 'imageLink'),
             'INLINE_IMG' => array($inline, 'image'),
             'INLINE_ELEMENT' => array($inline, 'span'),
             'URL' => array($urlEmail, 'linkify'),

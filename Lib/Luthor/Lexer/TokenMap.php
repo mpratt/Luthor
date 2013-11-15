@@ -111,6 +111,9 @@ class TokenMap implements \IteratorAggregate
         // Inline Images
         $rules['~(!\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A'] = 'INLINE_IMG';
 
+        // Link with image inside
+        $rules['~(\[\!\[([^\[]+)\]\(([^\)]+)\)\]\(([^\)]+\))(?:{(?:.|#).*})?)~A'] = 'INLINE_IMG_LINK';
+
         // Inline links
         $rules['~(\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A'] = 'INLINE_LINK';
 

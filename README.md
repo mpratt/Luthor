@@ -13,7 +13,7 @@ custom notations. There are other cool things that can be easily done, like appl
 or displayed. It also has a bunch of configuration options which can be used to change the behaviour of the library!
 See the Usage section for more information about how everything is done (not written yet, sorry). Or better yet, hop into the source and take a peak.
 
-Here is a list of supported markup:
+Here is a quick list of supported markup:
 - Paragraphs and line breaks
 - Headers
 - Blockquotes

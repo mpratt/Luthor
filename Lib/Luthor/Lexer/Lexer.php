@@ -117,7 +117,7 @@ class Lexer
 
                 // Find attributes on elements that are not in $this->config['ignore_attr']
                 if (!in_array($tokenName, $this->config['ignore_attr']) && strpos($matches['0'], '{') !== false) {
-                    $attr = $this->findAttributes($matches['0']);
+                    $attr = (string) $this->findAttributes($matches['0']);
                 }
 
                 return new Token($matches, $tokenName, $attr, $offset, $line);
@@ -141,8 +141,6 @@ class Lexer
             $content = str_replace($matches['0'], '', $content);
             return $matches['0'];
         }
-
-        return '';
     }
 }
 

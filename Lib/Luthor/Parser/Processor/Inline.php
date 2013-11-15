@@ -36,6 +36,45 @@ class Inline
     }
 
     /**
+     * Converts image links into html links with an image inside
+     *
+     * @param object $token Instance of \Luthor\Lexer\Token
+     * @return string
+     */
+    public function imageLink($token)
+    {
+        $imageToken = new \Luthor\Lexer\Token(
+            array(
+                '0' => $token->content,
+                '1' => $token->matches['1'],
+                '2' => $token->matches['2'],
+                '3' => $token->matches['3'],
+            ),
+            'INLINE_IMG',
+            $token->attr,
+            $token->position,
+            $token->line
+        );
+
+        $linkToken = new \Luthor\Lexer\Token(
+            array(
+                '0' => $token->content,
+                '1' => $token->matches['1'],
+                '2' => '{img}',
+                '3' => trim($token->matches['4'], ' )'),
+            ),
+            'INLINE_LINK',
+            '',
+            $token->position,
+            $token->line
+        );
+
+        $image = $this->image($imageToken);
+        $link = $this->link($linkToken);
+        return str_replace('{img}', $image, $link);
+    }
+
+    /**
      * Converts image tokens into html images
      *
      * @param object $token Instance of \Luthor\Lexer\Token
