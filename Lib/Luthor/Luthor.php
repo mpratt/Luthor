@@ -128,7 +128,7 @@ class Luthor
      * @param callable $operation the functiont to be called on the found token
      * @return void
      */
-    public function addTokenOperation($rule, $token, callable $operation)
+    public function addTokenOperation($rule, $token, $operation)
     {
         $this->tokenMap->add($rule, strtoupper($token));
         $this->parser->addOperation($token, $operation);
@@ -141,7 +141,7 @@ class Luthor
      * @param callable $operation the functiont to be called on the found token
      * @return void
      */
-    public function overwriteOperation($token, callable $operation)
+    public function overwriteOperation($token, $operation)
     {
         $this->parser->addOperation($token, $operation);
     }
@@ -152,7 +152,7 @@ class Luthor
      * @param mixed $func A Callable function/method to be used as a filter
      * @return void
      */
-    public function addFilter(callable $func)
+    public function addFilter($func)
     {
         $this->parser->addFilter($func);
     }

@@ -200,9 +200,15 @@ class Parser
      *
      * @param mixed $func A Callable function/method to be used as a filter
      * @return void
+     *
+     * @throws InvalidArgumentException when the function/method is not callable
      */
-    public function addFilter(callable $func)
+    public function addFilter($func)
     {
+        if (!is_callable($func)) {
+            throw new \InvalidArgumentException('Filter is not a callable operation');
+        }
+
         $this->filters[] = $func;
     }
 
