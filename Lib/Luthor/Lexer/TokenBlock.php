@@ -136,10 +136,6 @@ class TokenBlock implements \IteratorAggregate
      */
     public function append(Token $token, $appendOnClose = true)
     {
-        if (!$this->isOpen){
-            return ;
-        }
-
         // Check if we have an open subblock
         if ($key = $this->getLatestOpenedBlock()) {
             $this->tokens[$key]->append($token, false);
@@ -334,18 +330,12 @@ class TokenBlock implements \IteratorAggregate
      * @param bool $appendOnClose, wether or not we should append the closing token at the end
      * @return void
      */
-    public function close($token = null, $appendOnClose = true)
+    public function close(Token $token = null, $appendOnClose = true)
     {
         if ($this->isOpen) {
             if (!$token) {
                 $token = $this->getLastToken();
             }
-
-            array_walk($this->tokens, function ($el) use ($token) {
-                if ($el instanceof TokenBlock) {
-                    $el->close($token);
-                }
-            });
 
             foreach ($this->blocks[$this->getParentType()]['close_token'] as $type) {
                 $closeToken = new Token('close_on_trigger', $type, '', 1, $token->line);

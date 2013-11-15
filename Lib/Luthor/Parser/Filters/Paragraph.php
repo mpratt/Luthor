@@ -95,12 +95,12 @@ class Paragraph
         $text = preg_replace('!<br />(\s*</?(?:p|li|div|dl|dd|dt|th|pre|td|ul|ol)[^>]*>)!', '$1', $text);
         $text = preg_replace("|\n</p>$|", '</p>', $text);
 
+        // Add <br/> on lines ending with 2 spaces
+        $text = preg_replace('~ {2}$~', "<br />\n", $text);
+
         if (!empty($this->preTags)) {
             $text = str_replace(array_keys($this->preTags), array_values($this->preTags), $text);
         }
-
-        // Add <br/> on lines ending with 2 spaces
-        $text = preg_replace('~ {2}$~', "<br />\n", $text);
 
         return $text;
     }
@@ -115,6 +115,9 @@ class Paragraph
      */
     public function autoParagraph2($text)
     {
+        // Reserve content that should not be trimmed
+        $text = $this->reserve($text);
+
         // Trim starting whitespace on each line
         $text = preg_replace('~^[ \t]+~m', '', $text);
         //$text = preg_replace('~[ \t]+$~m', '', $str);
@@ -141,6 +144,11 @@ class Paragraph
 
         // Add <br/> on lines ending with 2 spaces
         $text = preg_replace('~ {2}$~', "<br />\n", $text);
+
+        if (!empty($this->preTags)) {
+            $text = str_replace(array_keys($this->preTags), array_values($this->preTags), $text);
+        }
+
         return $text;
     }
 
@@ -152,32 +160,30 @@ class Paragraph
      */
     protected function reserve($text)
     {
-        if (strpos($text, '<pre') !== false) {
-            $parts = explode('</pre>', $text);
-            $lastPart = array_pop($parts);
-            $text = '';
-            $i = 0;
-
-            foreach ($parts as $part) {
-                $start = strpos($part, '<pre');
-
-                // Malformed html?
-                if ($start === false) {
-                    $text .= $part;
-                    continue;
-                }
-
-                $name = "<pre reserve-pre-tag-$i></pre>";
-                $this->preTags[$name] = substr($part, $start) . '</pre>';
-
-                $text .= substr($part, 0, $start) . $name;
-                $i++;
-            }
-
-            $text .= $lastPart;
+        // Do we need to save PREs or TEXTAREAs somewhere in placeholders?
+        if (strpos($text, '<pre') !== false || strpos($text, '<textarea') !== false)
+        {
+            $text = preg_replace_callback('/\\s*(<textarea\\b[^>]*?>[\\s\\S]*?<\\/textarea>)\\s*/i', array($this, 'ignore'), $text);
+            $text = preg_replace_callback('/\\s*(<pre\\b[^>]*?>[\\s\\S]*?<\\/pre>)\\s*/i', array($this, 'ignore'), $text);
         }
 
         return $text;
+    }
+
+    /**
+     * This method is used to replace a matched tag
+     * with a placeholder. The main use of this method
+     * is to leave a portion of text with its original
+     * white space.
+     *
+     * @param array $content
+     * @return string
+     */
+    protected function ignore($content)
+    {
+        $placeholder = '<pre><code>%' . md5(time() . count($this->preTags) . mt_rand(0, 500)) . '%</code></pre>';
+        $this->preTags[$placeholder] = $content['1'];
+        return "\n\n" . $placeholder . "\n\n";
     }
 }
 

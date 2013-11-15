@@ -88,9 +88,12 @@ class TestLuthorOutput extends PHPUnit_Framework_TestCase
     {
         list($input, $expected) = $this->get('CodeBlock');
         $lex = new \Luthor\Luthor();
-
         $result = $lex->parse($input);
         $this->assertEquals($expected, $result);
+
+        $lex = new \Luthor\Luthor(array('auto_p_strategy' => 'autoParagraph2'));
+        $result = $lex->parse('<pre>hi</pre>');
+        $this->assertEquals('<pre>hi</pre>', $result);
     }
 
     public function testReference()
@@ -100,6 +103,11 @@ class TestLuthorOutput extends PHPUnit_Framework_TestCase
 
         $result = $lex->parse($input);
         $this->assertEquals($expected, $result);
+
+        $lex = new \Luthor\Luthor();
+        $text = 'This is a [definition][unknownId] link. Without definition';
+        $result = $lex->parse($text);
+        $this->assertEquals('<p>This is a [definition][unknownId] link. Without definition</p>', $result);
     }
 
     public function testFootnote()

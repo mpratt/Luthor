@@ -85,12 +85,8 @@ class TokenCollection implements \IteratorAggregate
      * @param object Instance of \Luthor\Lexer\Token
      * @return void
      */
-    public function appendToBlock(Token $token)
+    protected function appendToBlock(Token $token)
     {
-        if (empty($this->blocks)) {
-            return $this->add($token);
-        }
-
         $lastBlock = end($this->blocks);
         $this->tokens[$lastBlock['coord']]->append($token);
 
@@ -120,6 +116,7 @@ class TokenCollection implements \IteratorAggregate
     public function getDefinition(Token $token)
     {
         $key = (!empty($token->matches['3']) ? $token->matches['3'] : $token->matches['2']);
+
         if (empty(self::$refs[$key])) {
             $token->type = 'RAW';
             return $token;
