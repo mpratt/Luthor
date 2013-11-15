@@ -72,15 +72,6 @@ class TokenMap implements \IteratorAggregate
     {
         $nesting = (int) $this->config['max_nesting'];
         $indent  = (int) $this->config['indent_trigger'];
-
-        if ($nesting < 0) {
-            $nesting = 0;
-        }
-
-        if ($indent <= 1) {
-            $indent = 4;
-        }
-
         $rules = array();
 
         // Horizontal Rule ***

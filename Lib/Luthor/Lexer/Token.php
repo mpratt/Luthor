@@ -91,6 +91,17 @@ class Token
 
         return $return;
     }
+
+    /**
+     * When the token is casted into a string
+     * return the real content
+     *
+     * @return string;
+     */
+    public function __toString()
+    {
+        return $this->content;
+    }
 }
 
 ?>

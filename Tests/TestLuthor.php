@@ -69,6 +69,53 @@ class TestLuthor extends PHPUnit_Framework_TestCase
         $result = $lex->parse($text);
         $this->assertEquals('<p>Holb Amigos, como están? Feliz Nbvidbd</p>', $result);
     }
+
+    public function testFilterExceptions()
+    {
+        $this->setExpectedException('InvalidArgumentException');
+        $lex = new \Luthor\Luthor();
+        $lex->addFilter('A_non_existant_function_name');
+    }
+
+    public function testUnclosedBlocks()
+    {
+        $lex = new \Luthor\Luthor();
+
+        $text = "```\n This is a code";
+        $result = $lex->parse($text);
+        $this->assertEquals("<pre><code>\n This is a code\n</code></pre>", $result);
+    }
+
+    public function testOverwriteOperation()
+    {
+        $lex = new \Luthor\Luthor();
+
+        // Test that when an uncallable is given, the content is returned untouched
+        $lex->overwriteOperation('RAW', '');
+        $result = $lex->parse('Hello friends');
+        $this->assertEquals('<p>Hello friends</p>', $result);
+
+        $lex->overwriteOperation('RAW', function ($token) {
+            return str_replace('l', 'w', $token->content);
+        });
+
+        $result = $lex->parse('Hello friends');
+        $this->assertEquals('<p>Hewwo friends</p>', $result);
+    }
+
+    public function testNestingAndIndents()
+    {
+        $lex = new \Luthor\Luthor(array(
+            'max_nesting' => 0,
+            'indent_trigger' => 2
+        ));
+
+        $result = $lex->parse('  This should be inside a code block');
+        $this->assertEquals("<pre><code>\nThis should be inside a code block\n</code></pre>", $result);
+
+        $result = $lex->parse("- level 1\n    - level 2");
+        $this->assertEquals("<ul>\n<li>\n<p>level 1\n- level 2</p>\n</li>\n</ul>", $result);
+    }
 }
 
 ?>

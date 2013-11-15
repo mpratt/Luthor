@@ -123,23 +123,17 @@ class Parser
             if ($token instanceof \IteratorAggregate) {
                 $output[] = $this->parse($token);
                 continue ;
-            }
-
-            if ($token->type == 'ABBR_DEFINITION') {
+            } elseif ($token->type == 'ABBR_DEFINITION') {
                 $this->addFilter(function ($text) use ($token) {
                     $def = '<abbr title="' . $token->matches['3'] . '">' . $token->matches['2'] . '</abbr>';
                     return preg_replace('~\b' . preg_quote($token->matches['2'], '\b~'). '~', $def, $text);
                 });
 
                 continue ;
-            }
-
-            if ($token->type == 'FOOTNOTE_DEFINITION') {
+            } elseif ($token->type == 'FOOTNOTE_DEFINITION') {
                 $this->footnotes[] = $token;
                 continue ;
-            }
-
-            if ($token->type == 'INLINE_REFERENCE') {
+            } elseif ($token->type == 'INLINE_REFERENCE') {
                 $token = $collection->getDefinition($token);
             }
 
@@ -167,18 +161,16 @@ class Parser
      * Determines the operation to be run for the given token/string
      *
      * @param mixed $operation Closure, method name or other callable function
-     * @param object $token
+     * @param mixed $token Either an instance of Token or just text.
      * @return string
      */
     protected function run($operation, $token)
     {
         if (is_callable($operation)) {
             return call_user_func($operation, $token);
-        } elseif ($token instanceof \Luthor\Lexer\Token) {
-            return $token->content;
         }
 
-        return $token;
+        return (string) $token;
     }
 
     /**

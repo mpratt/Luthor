@@ -131,7 +131,7 @@ class Luthor
     public function addTokenOperation($rule, $token, $operation)
     {
         $this->tokenMap->add($rule, strtoupper($token));
-        $this->parser->addOperation($token, $operation);
+        $this->overwriteOperation(strtoupper($token), $operation);
     }
 
     /**
