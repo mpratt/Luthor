@@ -40,7 +40,7 @@ class Lexer
             'ignore_attr' => array('RAW'),
             'force_line_start' => array(
                 'HR', 'BLOCKQUOTE', 'CODEBLOCK', 'FENCED_CODEBLOCK', 'REFERENCE_DEFINITION',
-                'FOOTNOTE_DEFINITION', 'ABBR_DEFINITION', 'LISTBLOCK'
+                'FOOTNOTE_DEFINITION', 'ABBR_DEFINITION', 'LISTBLOCK', 'H_ATX', 'H_SETEXT'
             ),
         ), $config);
     }

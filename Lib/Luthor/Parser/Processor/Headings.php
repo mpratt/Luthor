@@ -35,7 +35,7 @@ class Headings
     }
 
     /**
-     * Converts a Setext type heading into an HTML
+     * Converts an ATX type heading into an HTML
      * heading
      *
      * @param object $token Instance of \Luthor\Lexer\Token

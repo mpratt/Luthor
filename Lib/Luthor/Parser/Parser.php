@@ -40,17 +40,7 @@ class Parser
      */
     public function __construct(array $config = array())
     {
-        $this->config = array_replace_recursive(array(
-            'auto_p' => true,
-            'auto_p_strategy' => 'autoParagraph'
-        ), $config);
-
-        if ($this->config['auto_p']){
-            $this->filters = array(
-                array(new Filters\Paragraph, $this->config['auto_p_strategy']),
-            );
-        }
-
+        $this->config = $config;
         $this->operations = $this->buildDefaultOperations();
     }
 

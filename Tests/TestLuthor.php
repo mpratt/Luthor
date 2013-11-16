@@ -13,17 +13,17 @@ class TestLuthor extends PHPUnit_Framework_TestCase
 {
     public function testEscapingAndParagraph()
     {
-        $lex = new \Luthor\Luthor(array('escape' => true, 'auto_p' => false));
+        $lex = new \Luthor\Luthor(array('allow_html' => false, 'auto_p' => false));
         $text = '<i>This is italic</i>, and this is **strong**';
         $result = $lex->parse($text);
         $this->assertEquals('&lt;i&gt;This is italic&lt;/i&gt;, and this is <strong>strong</strong>', $result);
 
-        $lex = new \Luthor\Luthor(array('escape' => true));
+        $lex = new \Luthor\Luthor(array('allow_html' => false));
         $text = '&gt; This should be a blockquote, even thought the char was escaped';
         $result = str_replace("\n", '', $lex->parse($text));
         $this->assertEquals('<blockquote><p>This should be a blockquote, even thought the char was escaped</p></blockquote>', $result);
 
-        $lex = new \Luthor\Luthor(array('escape' => true, 'auto_p_strategy' => 'autoParagraph2'));
+        $lex = new \Luthor\Luthor(array('allow_html' => false, 'auto_p_strategy' => 'autoParagraph2'));
         $text = '&gt; This should be a blockquote, even thought the char was escaped';
         $result = str_replace("\n", '', $lex->parse($text));
         $this->assertEquals('<blockquote><p>This should be a blockquote, even thought the char was escaped</p></blockquote>', $result);

@@ -99,6 +99,7 @@ class Inline
 
         if (trim($tag, ' `') == '') {
             $tag = 'code';
+            $content = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
         } else if (trim($tag, ' ~') == ''){
             $tag = 'del';
         } elseif (strlen(trim($tag)) >= 2) {

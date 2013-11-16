@@ -43,7 +43,7 @@ class Luthor
      * auto_p_strategy -> string | The Strategy, "autoParagraph" or "autoParagraph2"
      *                             The first one is based on wordpress wpautop and the second one
      *                             is based on Kohanas auto_p
-     * escape -> bool | Wether or not to run htmlspecialchars before lexing/parsing
+     * allow_html -> bool | Wether or not to run htmlspecialchars before lexing/parsing
      * max_nesting -> int | How many indentation levels are allowed/detected
      * tab_to_spaces -> int | Converts tabs into "x" spaces
      * indent_trigger -> int | How many spaces trigger an indent
@@ -56,7 +56,8 @@ class Luthor
     {
         $this->config = array_replace_recursive(array(
             'auto_p' => true,
-            'escape' => false,
+            'auto_p_strategy' => 'autoParagraph',
+            'allow_html' => true,
             'max_nesting' => 4,
             'tab_to_spaces' => 4,
             'indent_trigger' => 4,
@@ -66,6 +67,21 @@ class Luthor
         $this->tokenMap = new Lexer\TokenMap($this->config);
         $this->lexer    = new Lexer\Lexer($this->config);
         $this->parser   = new Parser\Parser($this->config);
+
+        if ($this->config['auto_p']){
+            $this->addFilter(
+                array(new \Luthor\Parser\Filters\Paragraph, $this->config['auto_p_strategy'])
+            );
+        }
+
+        // htmlspecialchars inside codeblocks
+        $this->addFilter(function ($text) {
+            return preg_replace_callback('~<pre(.*)><code>(.*)</code></pre>~ms', function ($m) {
+                return '<pre' . $m['1'] . '><code>' . htmlspecialchars($m['2'], ENT_QUOTES, 'UTF-8', false) . '</code></pre>';
+            }, $text);
+        });
+
+
     }
 
     /**
@@ -106,7 +122,13 @@ class Luthor
         $text = preg_replace('~\t~', str_repeat(' ', $this->config['tab_to_spaces']), $text);
         $text = preg_replace('~^[ ]+$~', '', $text);
 
-        if ($this->config['escape']) {
+        if ($this->config['allow_html']) {
+            /**
+             * Trim starting whitespace on each line that seems to contain html
+             * So that it doesnt get converted into code blocks or something else.
+             */
+            $text = preg_replace('~^[ \t]+\<~m', '<', $text);
+        } else {
             $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8', false);
             $text = preg_replace_callback('~^(&gt;)+~m', function ($m) {
                 return str_replace('&gt;', '>', $m[0]);

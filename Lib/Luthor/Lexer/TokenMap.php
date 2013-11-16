@@ -124,7 +124,7 @@ class TokenMap implements \IteratorAggregate
         $rules['~(.+(?:=+|-+))$~A'] = 'H_SETEXT';
 
         // Atx type Headers
-        $rules['~(#{1,}(?:.+))~A'] = 'H_ATX';
+        $rules['~(#{1,}(?:.+))$~A'] = 'H_ATX';
 
         // Generate Blockquote indents
         for ($i = $nesting; $i > 0; $i--) {
