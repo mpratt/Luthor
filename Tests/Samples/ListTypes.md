@@ -1,8 +1,8 @@
 
-- level **1**
-- level **1** again!
-    - level _2_
-    - level _2_ again!
+* level **1**
+* level **1** again!
+    * level _2_
+    * level _2_ again!
 
 + level **1**
 + level **1** again!
@@ -14,8 +14,8 @@
     1. level _2_
     2. level _2_ again!
 
-+ level **1**
-+ level **1** again!
+* level **1**
+* level **1** again!
     1. level _2_
     2. level _2_ again!
 
