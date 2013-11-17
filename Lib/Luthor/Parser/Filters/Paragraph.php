@@ -95,6 +95,11 @@ class Paragraph
         $text = preg_replace('!<br />(\s*</?(?:p|li|div|dl|dd|dt|th|pre|td|ul|ol)[^>]*>)!', '$1', $text);
         $text = preg_replace("|\n</p>$|", '</p>', $text);
 
+        // Dont <p> inside lists
+        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*</li>|m", "<li>$1</li>", $text);
+        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ul>|m", "<li>$1\n<ul>", $text);
+        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ol>|m", "<li>$1\n<ol>", $text);
+
         // Add <br/> on lines ending with 2 spaces
         $text = preg_replace('~ {2}$~', "<br />\n", $text);
 
@@ -141,6 +146,11 @@ class Paragraph
             $text = preg_replace('~<p>(?=</?'.$this->blocks.'[^>]*+>)~i', '', $text);
             $text = preg_replace('~(</?'.$this->blocks.'[^>]*+>)</p>~i', '$1', $text);
         }
+
+        // Dont <p> inside lists
+        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*</li>|m", "<li>$1</li>", $text);
+        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ul>|m", "<li>$1\n<ul>", $text);
+        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ol>|m", "<li>$1\n<ol>", $text);
 
         // Add <br/> on lines ending with 2 spaces
         $text = preg_replace('~ {2}$~', "<br />\n", $text);
