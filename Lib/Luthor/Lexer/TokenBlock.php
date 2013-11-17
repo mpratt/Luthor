@@ -50,7 +50,7 @@ class TokenBlock implements \IteratorAggregate
     protected $blocks = array(
         'LISTBLOCK' => array(
             'ignore' => array(),
-            'close_on' => array('LINE'),
+            'close_on' => array('LINE', 'BLOCKQUOTE'),
             'close_token' => array('CLOSE_LIST'),
             'on_creation' => array('OPEN_LIST'),
             'append_before' => array(

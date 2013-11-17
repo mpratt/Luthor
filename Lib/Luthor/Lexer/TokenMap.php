@@ -83,9 +83,9 @@ class TokenMap implements \IteratorAggregate
         // Generate LISTBLOCK indents
         for ($i = $nesting; $i > 0; $i--) {
             $num = ($i*$indent);
-            $rules['~( {' . $num . '}([\-\+\*]|(\d)+\.)\s+)~A'] = 'LISTBLOCK_INDENT_' . $i;
+            $rules['~>?( {' . $num . '}([\-\+\*]|(\d)+\.)\s+)~A'] = 'LISTBLOCK_INDENT_' . $i;
         }
-        $rules['~(([\-\+\*]|(\d)+\.)\s+)~A'] = 'LISTBLOCK';
+        $rules['~>?(([\-\+\*]|(\d)+\.)\s+)~A'] = 'LISTBLOCK';
 
         // Catch **hi**
         $rules['~(([\*]{1,2})([^\*]+)(?:[\*]{1,2}))~A'] = 'INLINE_ELEMENT';
@@ -129,7 +129,7 @@ class TokenMap implements \IteratorAggregate
         // Generate Blockquote indents
         for ($i = $nesting; $i > 0; $i--) {
             $num = ($i*$indent);
-            $rules['~>(?:[ ]{' . $num . '})> ?~A'] = 'BLOCKQUOTE_INDENT_' . $i;
+            $rules['~>(?:[ ]{' . $num . '}>|' . str_repeat(' ?>', $i) . ') ?~A'] = 'BLOCKQUOTE_INDENT_' . $i;
         }
         $rules['~> ?~A'] = 'BLOCKQUOTE';
 
