@@ -87,17 +87,17 @@ class TokenMap implements \IteratorAggregate
         }
         $rules['~>?(([\-\+\*]|(\d)+\.)\s+)~A'] = 'LISTBLOCK';
 
+        // Catch `hi`
+        $rules['~(([`]{1,2})([^`\n]+)(?:[`]{1,2}))~A'] = 'INLINE_ELEMENT';
+
         // Catch **hi**
-        $rules['~(([\*]{1,2})([^\*]+)(?:[\*]{1,2}))~A'] = 'INLINE_ELEMENT';
+        $rules['~(([\*]{1,2})([^\*\n]+)(?:[\*]{1,2}))~A'] = 'INLINE_ELEMENT';
 
         // Catch __hi__
-        $rules['~(([\_]{1,2})([^_]+)(?:[_]{1,2}))~A'] = 'INLINE_ELEMENT';
-
-        // Catch `hi`
-        $rules['~(([`]{1,2})([^`]+)(?:[`]{1,2}))~A'] = 'INLINE_ELEMENT';
+        $rules['~(([\_]{1,2})([^_\n]+)(?:[_]{1,2}))~A'] = 'INLINE_ELEMENT';
 
         // Catch ~~hi~~ for striked out text
-        $rules['~(([\~]{2})([^\~]+)(?:[\~]{2}))~A'] = 'INLINE_ELEMENT';
+        $rules['~(([\~]{2})([^\~\n]+)(?:[\~]{2}))~A'] = 'INLINE_ELEMENT';
 
         // Inline Images
         $rules['~(!\[([^\[]+)\]\(([^\)]+)\)(?:{(?:.|#).*})?)~A'] = 'INLINE_IMG';
@@ -126,16 +126,16 @@ class TokenMap implements \IteratorAggregate
         // Atx type Headers
         $rules['~(#{1,}(?:.+))$~A'] = 'H_ATX';
 
+        // Generate Block code rules
+        $rules['~ {' . $indent . '}~A'] = 'CODEBLOCK';
+        $rules['~```(?:{(?:.|#).*})?$~A'] = 'FENCED_CODEBLOCK';
+
         // Generate Blockquote indents
         for ($i = $nesting; $i > 0; $i--) {
             $num = ($i*$indent);
-            $rules['~>(?:[ ]{' . $num . '}>|' . str_repeat(' ?>', $i) . ') ?~A'] = 'BLOCKQUOTE_INDENT_' . $i;
+            $rules['~>(?:' . str_repeat(' ?>', $i) . ') ?~A'] = 'BLOCKQUOTE_INDENT_' . $i;
         }
         $rules['~> ?~A'] = 'BLOCKQUOTE';
-
-        // Generate Block code rules
-        $rules['~```(?:{(?:.|#).*})?$~A'] = 'FENCED_CODEBLOCK';
-        $rules['~ {' . $indent . '}~A'] = 'CODEBLOCK';
 
         // <email@domain.com>
         $rules['~(<(?:mailto:)?[^ ]+@[^ ]+>)~A'] = 'EMAIL';

@@ -1,8 +1,6 @@
 Luthor
 ======
-[![Build Status](https://secure.travis-ci.org/mpratt/Luthor.png?branch=master)](http://travis-ci.org/mpratt/Luthor)
-[![Scrutinizer Quality Score](https://scrutinizer-ci.com/g/mpratt/Luthor/badges/quality-score.png?s=24c42108df50eba8149dfc291f549dfe0d317ef1)](https://scrutinizer-ci.com/g/mpratt/Luthor/)
-[![Code Coverage](https://scrutinizer-ci.com/g/mpratt/Luthor/badges/coverage.png?s=537bc5b18469395beb0f944222c0b15bc72c9510)](https://scrutinizer-ci.com/g/mpratt/Luthor/)
+[![Build Status](https://secure.travis-ci.org/mpratt/Luthor.png?branch=master)](http://travis-ci.org/mpratt/Luthor) [![Scrutinizer Quality Score](https://scrutinizer-ci.com/g/mpratt/Luthor/badges/quality-score.png?s=24c42108df50eba8149dfc291f549dfe0d317ef1)](https://scrutinizer-ci.com/g/mpratt/Luthor/) [![Code Coverage](https://scrutinizer-ci.com/g/mpratt/Luthor/badges/coverage.png?s=537bc5b18469395beb0f944222c0b15bc72c9510)](https://scrutinizer-ci.com/g/mpratt/Luthor/) [![Latest Stable Version](https://poser.pugx.org/mpratt/luthor/v/stable.png)](https://packagist.org/packages/mpratt/luthor) [![Total Downloads](https://poser.pugx.org/mpratt/luthor/downloads.png)](https://packagist.org/packages/mpratt/luthor)
 
 Luthor is an extendable Markdown Lexer/Parser for PHP. It converts markdown text into HTML. In other words, what it does is,
 It reads the markdown text line by line and analyses its content. It uses a Lexer to tokenize each element and based on a token map,

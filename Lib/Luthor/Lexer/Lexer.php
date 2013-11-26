@@ -39,8 +39,10 @@ class Lexer
         $this->config = array_replace_recursive(array(
             'ignore_attr' => array('RAW'),
             'force_line_start' => array(
+                'FOOTNOTE_DEFINITION', 'ABBR_DEFINITION', 'LISTBLOCK', 'H_ATX', 'H_SETEXT',
                 'HR', 'BLOCKQUOTE', 'CODEBLOCK', 'FENCED_CODEBLOCK', 'REFERENCE_DEFINITION',
-                'FOOTNOTE_DEFINITION', 'ABBR_DEFINITION', 'LISTBLOCK', 'H_ATX', 'H_SETEXT'
+                'BLOCKQUOTE_INDENT_1', 'BLOCKQUOTE_INDENT_2', 'BLOCKQUOTE_INDENT_3', 'BLOCKQUOTE_INDENT_4',
+                'BLOCKQUOTE_INDENT_5', 'BLOCKQUOTE_INDENT_6', 'BLOCKQUOTE_INDENT_7', 'BLOCKQUOTE_INDENT_8',
             ),
         ), $config);
     }

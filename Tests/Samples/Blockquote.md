@@ -5,8 +5,8 @@
 Normal Text outside the Blockquote
 
 > This is a block quote
->    > This is **inside** the blockquote
->    > Inside of _it again_
+> > This is **inside** the blockquote
+> > Inside of _it again_
 > Back to the top
 > this is the ~~initial~~ blockquote
 
