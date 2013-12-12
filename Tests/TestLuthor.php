@@ -9,112 +9,150 @@
  * file that was distributed with this source code.
  */
 
-class TestLuthor extends PHPUnit_Framework_TestCase
+class TestLuthorOutput extends PHPUnit_Framework_TestCase
 {
-    public function testEscapingAndParagraph()
+    protected function get($file)
     {
-        $lex = new \Luthor\Luthor(array('allow_html' => false, 'auto_p' => false));
-        $text = '<i>This is italic</i>, and this is **strong**';
-        $result = $lex->parse($text);
-        $this->assertEquals('&lt;i&gt;This is italic&lt;/i&gt;, and this is <strong>strong</strong>', $result);
+        $out = array();
+        foreach (array($file . '.md', $file . '.html') as $f) {
+            $out[] = trim(file_get_contents(__DIR__ . '/Samples/' . $f), "\n");
+        }
+
+        return $out;
+    }
+
+    public function testBlockquotes()
+    {
+        list($input, $expected) = $this->get('Blockquote');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
 
         $lex = new \Luthor\Luthor(array('allow_html' => false));
-        $text = '&gt; This should be a blockquote, even thought the char was escaped';
-        $result = str_replace("\n", '', $lex->parse($text));
-        $this->assertEquals('<blockquote><p>This should be a blockquote, even thought the char was escaped</p></blockquote>', $result);
-
-        $lex = new \Luthor\Luthor(array('allow_html' => false, 'auto_p_strategy' => 'autoParagraph2'));
-        $text = '&gt; This should be a blockquote, even thought the char was escaped';
-        $result = str_replace("\n", '', $lex->parse($text));
-        $this->assertEquals('<blockquote><p>This should be a blockquote, even thought the char was escaped</p></blockquote>', $result);
-
-        $lex = new \Luthor\Luthor();
-        $text = 'this is an <object>, used to test stupid paragraph conditional';
-        $result = str_replace("\n", '', $lex->parse($text));
-        $this->assertEquals('<p>this is an <object>, used to test stupid paragraph conditional</p>', $result);
+        $result = preg_replace("~\n~", '', $lex->parse('&gt; Hi'));
+        $this->assertEquals('<blockquote><p>Hi</p></blockquote>', $result);
     }
 
-    public function testExtension()
+    public function testLists()
     {
+        list($input, $expected) = $this->get('ListTypes');
         $lex = new \Luthor\Luthor();
-        $lex->overwriteOperation('RAW', function ($token) {
-            if ($token->content == 'Hello') {
-                return 'World';
-            }
-            return $token->content;
-        });
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
 
-        $text = 'Hello!';
-        $result = $lex->parse($text);
-        $this->assertEquals('<p>World!</p>', $result);
-
-        $lex = new \Luthor\Luthor();
-        $lex->addTokenOperation('(\.\.(\d+)\.\.)', 'HOUSE', function ($token) {
-            return $token->matches['2'] . 'th';
-        });
-
-        $text = 'Hi friends today is the ..14.. of november';
-        $result = $lex->parse($text);
-        $this->assertEquals('<p>Hi friends today is the 14th of november</p>', $result);
+        list($input, $expected) = $this->get('ListLevels');
+        $lex = new \Luthor\Luthor(array('max_nesting' => 4));
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
     }
 
-    public function testFilters()
+    public function testCodeblock()
     {
+        list($input, $expected) = $this->get('RegularCodeblock');
         $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+
+        list($input, $expected) = $this->get('FencedCodeblock');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testHeading()
+    {
+        list($input, $expected) = $this->get('Heading');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testHorizontalRule()
+    {
+        list($input, $expected) = $this->get('Hr');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testInlineSpan()
+    {
+        list($input, $expected) = $this->get('InlineSpan');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testUrlEmail()
+    {
+        list($input, $expected) = $this->get('UrlEmail');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testImagesLinks()
+    {
+        list($input, $expected) = $this->get('Images');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+
+        list($input, $expected) = $this->get('Links');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testAbbr()
+    {
+        list($input, $expected) = $this->get('Abbr');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testFootNote()
+    {
+        list($input, $expected) = $this->get('Footnote');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testReference()
+    {
+        list($input, $expected) = $this->get('Reference');
+        $lex = new \Luthor\Luthor();
+        $result = $lex->parse($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function testExtensionAndFilters()
+    {
+        $lex = new \Luthor\Luthor(array('allow_html' => false, 'auto_p' => false));
+        $lex->addExtension(new Mentions());
         $lex->addFilter(function ($text) {
-            return str_replace('a', 'b', $text);
+            return str_replace('pratt', 'mike', $text);
         });
 
-        $text = 'Hola Amigos, como están? Feliz Navidad';
-        $result = $lex->parse($text);
-        $this->assertEquals('<p>Holb Amigos, como están? Feliz Nbvidbd</p>', $result);
+        $result = $lex->parse('Hi @pratt');
+        $this->assertEquals('Hi <link>mike</link>', $result);
     }
 
-    public function testFilterExceptions()
+    public function testBadFilter()
     {
         $this->setExpectedException('InvalidArgumentException');
+
         $lex = new \Luthor\Luthor();
-        $lex->addFilter('A_non_existant_function_name');
+        $lex->addFilter('hi');
     }
 
-    public function testUnclosedBlocks()
+    public function testAutoP()
     {
         $lex = new \Luthor\Luthor();
-
-        $text = "```\n This is a code";
-        $result = $lex->parse($text);
-        $this->assertEquals("<pre><code>\n This is a code\n</code></pre>", $result);
-    }
-
-    public function testOverwriteOperation()
-    {
-        $lex = new \Luthor\Luthor();
-
-        // Test that when an uncallable is given, the content is returned untouched
-        $lex->overwriteOperation('RAW', '');
-        $result = $lex->parse('Hello friends');
-        $this->assertEquals('<p>Hello friends</p>', $result);
-
-        $lex->overwriteOperation('RAW', function ($token) {
-            return str_replace('l', 'w', $token->content);
-        });
-
-        $result = $lex->parse('Hello friends');
-        $this->assertEquals('<p>Hewwo friends</p>', $result);
-    }
-
-    public function testNestingAndIndents()
-    {
-        $lex = new \Luthor\Luthor(array(
-            'max_nesting' => 0,
-            'indent_trigger' => 2
-        ));
-
-        $result = $lex->parse('  This should be inside a code block');
-        $this->assertEquals("<pre><code>\nThis should be inside a code block\n</code></pre>", $result);
-
-        $result = $lex->parse("- level 1\n    - level 2");
-        $this->assertEquals("<ul>\n<li>\n<p>level 1\n- level 2</p>\n</li>\n</ul>", $result);
+        $result = preg_replace("~\n~", '', $lex->parse("<object><embed><param/></embed></object>"));
+        $this->assertEquals('<p><object><embed><param/></embed></object></p>', $result);
     }
 }
 

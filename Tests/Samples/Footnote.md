@@ -6,5 +6,5 @@ tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
 At vero eos et accusam et justo duo dolores et ea rebum[^id2]. Stet clita kasd gubergren,
 no sea takimata sanctus est Lorem ipsum dolor sit amet.
 
-     [^id3] : Esto tambien si que es genial
+[^id3] : Esto tambien si que es genial
 [^id2] : Esto tambien es genial.

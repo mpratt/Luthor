@@ -12,237 +12,160 @@
 
 namespace Luthor\Parser;
 
+use \Luthor\Parser\Lexer,
+    \Luthor\Parser\Filters\FootNotes,
+    \Luthor\Parser\Extensions\Interfaces\InlineInterface,
+    \Luthor\Parser\Extensions\Interfaces\ReferenceInterface,
+    \Luthor\Parser\Extensions\Interfaces\BlockInterface;
+
 /**
  * Class is the Parser
  */
 class Parser
 {
-    /** @var Instance of \Luthor\Lexer\TokenCollection */
-    protected $collection;
-
     /** @var array Array with configuration directives */
     protected $config = array();
 
-    /** @var array Array with filters */
-    protected $filters = array();
+    /** @var array Array with output content */
+    protected $output = array();
 
-    /** @var array Array with footnote tokens to append at the end */
-    protected $footnotes = array();
+    /** @var array open blocks found */
+    protected $blocks = array();
 
-    /** @var array The mapping for Token -> operation/processor */
-    protected $operations = array();
-
-    /**
-     * Construct
-     *
-     * @param array $config
-     * @return void
-     */
-    public function __construct(array $config = array())
-    {
-        $this->config = $config;
-        $this->operations = $this->buildDefaultOperations();
-    }
-
-    /**
-     * Maps tokens to their relevant operation/processor function/method.
-     *
-     * @return array with token -> operation relationship
-     */
-    protected function buildDefaultOperations()
-    {
-        $blockquote = new Processor\Blockquote();
-        $processor = new Processor\Processor();
-        $headings = new Processor\Headings();
-        $urlEmail = new Processor\UrlEmail();
-        $inline = new Processor\Inline();
-        $code = new Processor\CodeBlock();
-        $list = new Processor\Lists();
-
-        return array(
-            'RAW' => array($processor, 'rawInput'),
-            'ESCAPED' => array($processor, 'escapedInput'),
-            'LINE' => array($processor, 'newLine'),
-            'HR' => array($processor, 'horizontalLine'),
-            'OPEN_LIST' => array($list, 'openList'),
-            'CLOSE_LIST' => array($list, 'closeList'),
-            'OPEN_ORDERED_LIST' => array($list, 'openOrderedList'),
-            'CLOSE_ORDERED_LIST' => array($list, 'closeOrderedList'),
-            'LISTBLOCK' => array($list, 'openElement'),
-            'CLOSE_LIST_ELEMENT' => array($list, 'closeElement'),
-            'BLOCKQUOTE' => array($blockquote, 'open'),
-            'CLOSE_BLOCKQUOTE' => array($blockquote, 'close'),
-            'CODEBLOCK' => array($code, 'open'),
-            'FENCED_CODEBLOCK' => array($code, 'openFencedBlock'),
-            'CLOSE_CODEBLOCK' => array($code, 'close'),
-            'H_SETEXT' => array($headings, 'setext'),
-            'H_ATX' => array($headings, 'atx'),
-            'INLINE_LINK' => array($inline, 'link'),
-            'INLINE_IMG_LINK' => array($inline, 'imageLink'),
-            'INLINE_IMG' => array($inline, 'image'),
-            'ABBR_DEFINITION' => array($this, 'createAbbrfilter'),
-            'FOOTNOTE_DEFINITION' => array($this, 'storeFootnoteDefinition'),
-            'INLINE_ELEMENT' => array($inline, 'span'),
-            'URL' => array($urlEmail, 'linkify'),
-            'EMAIL' => array($urlEmail, 'email'),
-        );
-    }
-
-    /**
-     * Registers a new operation for a given token name
-     *
-     * @param string $token
-     * @param mixed|callable $operation
-     * @return void
-     */
-    public function addOperation($token, $operation)
-    {
-        $this->operations[strtoupper($token)] = $operation;
-    }
+    /** @var string The key where the current used block is located */
+    protected $currentBlock = null;
 
     /**
      * Actually parses the available tokens
      *
-     * @param object $collection Instance of \IteratorAggregate
+     * @param object $lexer Instance of \Luthor\Parser\Lexer
      * @return string
-     *
-     * @throws LogicException When there is no available operation for a token
      */
-    public function parse(\IteratorAggregate $collection)
+    public function parse(Lexer $lexer)
     {
-        $output = array();
-        //print_r($collection);
-        foreach ($collection as $token) {
-
-            if ($token instanceof \IteratorAggregate) {
-                $output[] = $this->parse($token);
-                continue ;
-            } elseif ($token->type == 'INLINE_REFERENCE') {
-                $token = $collection->getDefinition($token);
-            }
-
-            // Remove indent markers from the token type
-            $token->type = preg_replace('~_INDENT_(\d+)$~', '', $token->type);
-            if (!isset($this->operations[$token->type])) {
-                throw new \LogicException(sprintf('Missing operation for type "%s"', $token->type));
-            }
-
-            $string = $this->run($this->operations[$token->type], $token);
-            if (isset($output[$token->line])){
-                $output[$token->line] .= $string;
-            } else {
-                $output[$token->line] = $string;
-            }
+        $this->output = array();
+        foreach ($lexer as $token) {
+            $this->findParser($token);
         }
 
-        $output = implode("\n", $output);
-        $output = $this->appendFootnotes($output);
-
-        return trim($this->runFilters($output), "\n");
+        return implode("\n", $this->output);
     }
 
     /**
-     * Determines the operation to be run for the given token/string
+     * Parses inline extensions
      *
-     * @param mixed $operation Closure, method name or other callable function
-     * @param mixed $token Either an instance of Token or just text.
-     * @return string
-     */
-    protected function run($operation, $token)
-    {
-        if (is_callable($operation)) {
-            return call_user_func($operation, $token);
-        }
-
-        return (string) $token;
-    }
-
-    /**
-     * Runs filters on the processed text
-     *
-     * @param string $text
-     * @return string
-     */
-    protected function runFilters($text)
-    {
-        foreach ($this->filters as $filter) {
-            $text = $this->run($filter, $text);
-        }
-
-        return $text;
-    }
-
-    /**
-     * Adds a new filter
-     *
-     * @param mixed $func A Callable function/method to be used as a filter
+     * @param object Implementing InlineInterface
      * @return void
-     *
-     * @throws InvalidArgumentException when the function/method is not callable
      */
-    public function addFilter($func)
+    protected function findParser($token, $useOpenBlocks = true)
     {
-        if (!is_callable($func)) {
-            throw new \InvalidArgumentException('Filter is not a callable operation');
+        if (!empty($this->blocks) && $useOpenBlocks) {
+            $this->addToBlock($token);
+        } elseif ($token instanceof BlockInterface) {
+            $this->markBlock($token);
+        } else {
+            $this->addToOutput($token->line, $token->parse());
         }
-
-        $this->filters[] = $func;
     }
 
     /**
-     * Appends footnotes at the end of the text when available
+     * Adds content to the output property
      *
-     * @param string $text
-     * @return string
+     * @param int $line
+     * @param string $content
+     * @return void
      */
-    protected function appendFootnotes($text)
+    protected function addToOutput($line, $content)
     {
-        if (!empty($this->footnotes)) {
-            $append = array('<div class="footnotes"><hr /><ol>');
-            foreach ($this->footnotes as $key => $token) {
-                $key += 1;
-                $id = '<sup id="fnref-' . $key . '"><a href="#fn-' . $key . '" rel="footnote">' . $key . '</a></sup>';
-                $text = str_replace('[^' . $token->matches['2'] . ']', $id, $text);
+        if (isset($this->output[$line])) {
+            $this->output[$line] .= $content;
+        } else {
+            $this->output[$line] = $content;
+        }
+    }
 
-                $append[] = '<li id="fn-' . $key . '">' . $token->matches['3'] . '
-                    <a href="#fnref-' . $key . '" class="footnote-backref">&#8617;</a>
-                    </li>';
+    /**
+     * Marks the start of a block
+     *
+     * @param object Implementing BlockInterface
+     * @return bool
+     */
+    protected function markBlock(BlockInterface $token)
+    {
+        $id = $token->getId();
+        if (!empty($this->blocks[$id])) {
+            $this->addToOutput($token->line, $token->parse());
+            return false;
+        }
+
+        if (!empty($this->currentBlock)) {
+            $key = $this->currentBlock;
+            if ($this->blocks[$key]->toRaw($token->getType())) {
+                $raw = htmlspecialchars($token->raw(), ENT_QUOTES, 'UTF-8', false);
+                $this->addToOutput($token->line, $raw);
+                return true;
             }
-
-            $append[] = '</ol></div>';
-            $text = $text . "\n\n" . preg_replace('~\s+~', ' ', implode('', $append));
         }
 
-        return $text;
+        $context = $token->getContext();
+        if ($create = $context->create()) {
+            $this->addToOutput($token->line, $create);
+        }
+
+        $this->blocks[$id] = $context;
+        $this->currentBlock = $id;
+        return true;
     }
 
     /**
-     * Creates an Abbr filter that replaces the token
-     * string with an <abbr> tag
+     * Adds/parses $token in the context of a
+     * previous opened block
      *
-     * @param object $token Instance of \Luthor\Lexer\Token
-     * @return string (An empty string)
+     * @param object $token
+     * @return void
      */
-    protected function createAbbrFilter($token)
+    protected function addToBlock($token)
     {
-        $this->addFilter(function ($text) use ($token) {
-            $def = '<abbr title="' . $token->matches['3'] . '">' . $token->matches['2'] . '</abbr>';
-            return preg_replace('~\b' . preg_quote($token->matches['2'], '\b~'). '~', $def, $text);
-        });
+        if (empty($this->blocks)) {
+            return ;
+        }
 
-        return '';
-    }
+        if ($token instanceof BlockInterface && $this->markBlock($token)) {
+            return ;
+        }
 
-    /**
-     * Stores footnote definitions for later use
-     *
-     * @param object $token Instance of \Luthor\Lexer\Token
-     * @return string (An empty string)
-     */
-    protected function storeFootnoteDefinition($token)
-    {
-        $this->footnotes[] = $token;
-        return '';
+        $key = $this->currentBlock;
+
+        // Check if the current block is ignoring this type of tokens
+        if ($this->blocks[$key]->ignore($token)) {
+            return ;
+        }
+
+        // Check if this type of token triggers a close event
+        if ($this->blocks[$key]->canClose($token)) {
+            $this->addToOutput($token->line, $this->blocks[$key]->close());
+
+            array_pop($this->blocks);
+            $keys = array_keys($this->blocks);
+            $this->currentBlock = end($keys);
+            $this->addToBlock($token);
+            return ;
+        }
+
+        // Prevent double lines on codeblocks
+        if ($token->getType() == 'LINE' &&
+            strpos($this->blocks[$key]->getType(), 'CODEBLOCK') !== false) {
+            $this->addToOutput($token->line, "");
+            return ;
+        }
+
+        // Wether or not the contents of this should be converted to raw
+        if ($this->blocks[$key]->toRaw($token->getType())) {
+            $raw = htmlspecialchars($token->raw(), ENT_QUOTES, 'UTF-8', false);
+            $this->addToOutput($token->line, $raw);
+        } else {
+            $this->findParser($token, false);
+        }
     }
 }
 

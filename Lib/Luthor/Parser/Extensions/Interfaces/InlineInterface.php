@@ -1,6 +1,6 @@
 <?php
 /**
- * Blockquote.php
+ * InlineInterface.php
  *
  * @package Luthor
  * @author Michael Pratt <pratt@hablarmierda.net>
@@ -10,32 +10,27 @@
  * file that was distributed with this source code.
  */
 
-namespace Luthor\Parser\Processor;
+namespace Luthor\Parser\Extensions\Interfaces;
 
 /**
- * Manages Blockquotes
+ * This is the interface that all inline extensions
+ * should follow
  */
-class Blockquote
+interface InlineInterface extends SetterGetterInterface
 {
     /**
-     * Opens a new blockquote
+     * Returns the raw content of the extension
      *
      * @return string
      */
-    public function open()
-    {
-        return '<blockquote>' . "\n\n";
-    }
+    public function raw();
 
     /**
-     * Closes a new blockquote
+     * Returns the parsed content
      *
      * @return string
      */
-    public function close()
-    {
-        return "\n\n" . '</blockquote>' . "\n\n";
-    }
+    public function parse();
 }
 
 ?>

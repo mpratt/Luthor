@@ -12,21 +12,34 @@
 
 namespace Luthor;
 
+use \Luthor\Parser\Filters\Paragraph,
+    \Luthor\Parser\Filters\Corrections,
+    \Luthor\Parser\Filters\Code,
+    \Luthor\Parser\Filters\InlineReference,
+    \Luthor\Parser\Lexer,
+    \Luthor\Parser\Parser;
+
 /**
  * The Main Class of this library
  */
 class Luthor
 {
     /** @var int Class constant with the current Version of this library */
-    const VERSION = '0.1';
+    const VERSION = '0.2';
+
+    /** @var string Chars reserved by markdown */
+    const MARKDOWN_RESERVED = '\\`*_{}[]()#+-.!';
+
+    /** @var string Chars reserved by Luthor */
+    const LUTHOR_RESERVED = '<~@';
 
     /** @var array Associative array with configuration directives */
     protected $config = array();
 
-    /** @var object Instance of \Luthor\Lexer\TokenMap */
-    protected $tokenMap;
+    /** @var array Array with filters */
+    protected $filters = array();
 
-    /** @var object Instance of \Luthor\Lexer\Lexer */
+    /** @var object Instance of \Luthor\Parser\Lexer */
     protected $lexer;
 
     /** @var object Instance of \Luthor\Parser\Parser */
@@ -40,13 +53,9 @@ class Luthor
      *
      * Posible configuration options
      * auto_p -> bool | Wether or not to automatically add "<p>" tags.
-     * auto_p_strategy -> string | The Strategy, "autoParagraph" or "autoParagraph2"
-     *                             The first one is based on wordpress wpautop and the second one
-     *                             is based on Kohanas auto_p
      * allow_html -> bool | Wether or not to run htmlspecialchars before lexing/parsing
      * max_nesting -> int | How many indentation levels are allowed/detected
      * tab_to_spaces -> int | Converts tabs into "x" spaces
-     * indent_trigger -> int | How many spaces trigger an indent
      * additional_reserved -> string | Add custom chars into the reserved space
      *                                 Important for custom token creation.
      * ignore_attr -> array | Array with token types where we should ignore attribute flags {#id} or {.class}
@@ -56,32 +65,17 @@ class Luthor
     {
         $this->config = array_replace_recursive(array(
             'auto_p' => true,
-            'auto_p_strategy' => 'autoParagraph',
             'allow_html' => true,
             'max_nesting' => 4,
             'tab_to_spaces' => 4,
-            'indent_trigger' => 4,
-            'additional_reserved' => ''
+            'reserve_chars' => ''
         ), $config);
 
-        $this->tokenMap = new Lexer\TokenMap($this->config);
-        $this->lexer    = new Lexer\Lexer($this->config);
-        $this->parser   = new Parser\Parser($this->config);
+        $reserved = self::MARKDOWN_RESERVED . self::LUTHOR_RESERVED . $this->config['reserve_chars'];
+        $this->config['reserve_chars'] = implode('', array_unique(str_split($reserved)));
 
-        if ($this->config['auto_p']){
-            $this->addFilter(
-                array(new \Luthor\Parser\Filters\Paragraph, $this->config['auto_p_strategy'])
-            );
-        }
-
-        // htmlspecialchars inside codeblocks
-        $this->addFilter(function ($text) {
-            return preg_replace_callback('~<pre(.*)><code>(.*)</code></pre>~ms', function ($m) {
-                return '<pre' . $m['1'] . '><code>' . htmlspecialchars($m['2'], ENT_QUOTES, 'UTF-8', false) . '</code></pre>';
-            }, $text);
-        });
-
-
+        $this->lexer = new Lexer($this->config);
+        $this->parser = new Parser();
     }
 
     /**
@@ -94,12 +88,74 @@ class Luthor
     {
         $text = $this->prepareText($text);
 
-        $this->lexer->setMap($this->tokenMap);
+        $this->lexer->setText($text);
+        $parsedText = $this->parser->parse($this->lexer);
 
-        $tokens = $this->lexer->getTokens($text);
-        $parsed = $this->parser->parse($tokens);
+        $filters = array_merge(
+            $this->defaultFilters(),
+            $this->filters
+        );
 
-        return $parsed;
+        foreach ($filters as $filter) {
+            $parsedText = call_user_func($filter, $parsedText);
+        }
+
+        return trim($parsedText, "\n");
+    }
+
+    /**
+     * Loads the default filters that should be run when the text
+     * is already processed.
+     *
+     * @return array
+     */
+    protected function defaultFilters()
+    {
+        $filters = array();
+
+        // Parse Inline markdown
+        $filters[] = array(new InlineReference(), 'translate');
+
+        // Minor corrections on the finished html
+        $filters[] = array(new Corrections(), 'correct');
+
+        // Call AutoParagraph when enabled
+        if ($this->config['auto_p']){
+            $filters[] = array(new Paragraph(), 'autoParagraph');
+        }
+
+        return $filters;
+    }
+
+    /**
+     * Adds a new filter
+     * Not using the callable typehint because I want to support PHP 5.3 :(
+     *
+     * @param mixed $func A Callable function/method to be used as a filter
+     * @return void
+     *
+     * @throws InvalidArgumentException when the function/method is not callable
+     */
+    public function addFilter($func = null)
+    {
+        if (!empty($func)) {
+            if (!is_callable($func)) {
+                throw new \InvalidArgumentException('Filter is not a callable operation');
+            }
+
+            $this->filters[] = $func;
+        }
+    }
+
+    /**
+     * Adds a new extension to the lexex
+     *
+     * @param object $extension
+     * @return void
+     */
+    public function addExtension($extension)
+    {
+        $this->lexer->addExtension($extension);
     }
 
     /**
@@ -124,7 +180,7 @@ class Luthor
 
         if ($this->config['allow_html']) {
             /**
-             * Trim starting whitespace on each line that seems to contain html
+             * Trim starting whitespace on each line that seems to contain html tags
              * So that it doesnt get converted into code blocks or something else.
              */
             $text = preg_replace('~^[ \t]+\<~m', '<', $text);
@@ -139,44 +195,7 @@ class Luthor
         $text = preg_replace('~([^\s]*)\n(=+|-+)[ ]*\n~', "$1\$2\n", $text);
 
         // Add a couple of new lines at the end of the text
-        return trim($text, "\n") . "\n\n";
-    }
-
-    /**
-     * Registers a new regex => token relation to the class.
-     *
-     * @param string $rule Regex
-     * @param string $token token name
-     * @param callable $operation the functiont to be called on the found token
-     * @return void
-     */
-    public function addTokenOperation($rule, $token, $operation)
-    {
-        $this->tokenMap->add($rule, strtoupper($token));
-        $this->overwriteOperation(strtoupper($token), $operation);
-    }
-
-    /**
-     * Overwrites a token operation
-     *
-     * @param string $token token name
-     * @param callable $operation the functiont to be called on the found token
-     * @return void
-     */
-    public function overwriteOperation($token, $operation)
-    {
-        $this->parser->addOperation($token, $operation);
-    }
-
-    /**
-     * Adds a new filter into the parser
-     *
-     * @param mixed $func A Callable function/method to be used as a filter
-     * @return void
-     */
-    public function addFilter($func)
-    {
-        $this->parser->addFilter($func);
+        return "\n\n" . trim($text, "\n") . "\n\n";
     }
 }
 

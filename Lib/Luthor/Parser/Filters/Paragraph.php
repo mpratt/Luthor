@@ -95,62 +95,12 @@ class Paragraph
         $text = preg_replace('!<br />(\s*</?(?:p|li|div|dl|dd|dt|th|pre|td|ul|ol)[^>]*>)!', '$1', $text);
         $text = preg_replace("|\n</p>$|", '</p>', $text);
 
-        // Dont <p> inside lists
-        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*</li>|m", "<li>$1</li>", $text);
-        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ul>|m", "<li>$1\n<ul>", $text);
-        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ol>|m", "<li>$1\n<ol>", $text);
-
-        // Add <br/> on lines ending with 2 spaces
-        $text = preg_replace('~ {2}$~', "<br />\n", $text);
-
-        if (!empty($this->preTags)) {
-            $text = str_replace(array_keys($this->preTags), array_values($this->preTags), $text);
+        if (strpos($text, '<li>') !== false) {
+            $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*</li>|m", "<li>$1</li>", $text);
+            $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ul>|m", "<li>$1\n<ul>", $text);
+            $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ol>|m", "<li>$1\n<ol>", $text);
+            $text = preg_replace("|<li>(.+?)</p>|", "<li>$1", $text); // Remove un-opened <p>
         }
-
-        return $text;
-    }
-
-    /**
-     * Automatically applies "p" and "br" markup to text.
-     * Based on Kohana's auto_p method.
-     *
-     * @param string $text
-     * @return string
-     * @link http://kohanaframework.org/3.3/guide-api/Text#auto_p
-     */
-    public function autoParagraph2($text)
-    {
-        // Reserve content that should not be trimmed
-        $text = $this->reserve($text);
-
-        // Trim starting whitespace on each line
-        $text = preg_replace('~^[ \t]+~m', '', $text);
-        //$text = preg_replace('~[ \t]+$~m', '', $str);
-
-        // The following regexes only need to be executed if the string contains html
-        if ($html_found = (strpos($text, '<') !== false))
-        {
-            // Put at least two linebreaks before and after $thi->blocks elements
-            $text = preg_replace('~^<'.$this->blocks.'[^>]*+>~im', "\n$0", $text);
-            $text = preg_replace('~</'.$this->blocks.'\s*+>$~im', "$0\n", $text);
-        }
-
-        // Do the <p> magic!
-        $text = '<p>'.trim($text).'</p>';
-        $text = preg_replace('~\n{2,}~', "</p>\n\n<p>", $text);
-
-        // The following regexes only need to be executed if the string contains html
-        if ($html_found !== false)
-        {
-            // Remove p tags around $thi->blocks elements
-            $text = preg_replace('~<p>(?=</?'.$this->blocks.'[^>]*+>)~i', '', $text);
-            $text = preg_replace('~(</?'.$this->blocks.'[^>]*+>)</p>~i', '$1', $text);
-        }
-
-        // Dont <p> inside lists
-        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*</li>|m", "<li>$1</li>", $text);
-        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ul>|m", "<li>$1\n<ul>", $text);
-        $text = preg_replace("|<li>\s*<p>(.+?)\s*</p>\s*<ol>|m", "<li>$1\n<ol>", $text);
 
         // Add <br/> on lines ending with 2 spaces
         $text = preg_replace('~ {2}$~', "<br />\n", $text);
@@ -171,7 +121,9 @@ class Paragraph
     protected function reserve($text)
     {
         // Do we need to save PREs or TEXTAREAs somewhere in placeholders?
-        if (strpos($text, '<pre') !== false || strpos($text, '<textarea') !== false)
+        if (strpos($text, '<pre') !== false ||
+            strpos($text, '<textarea') !== false ||
+            strpos($text, '<code') !== false)
         {
             $text = preg_replace_callback('/\\s*(<textarea\\b[^>]*?>[\\s\\S]*?<\\/textarea>)\\s*/i', array($this, 'ignore'), $text);
             $text = preg_replace_callback('/\\s*(<pre\\b[^>]*?>[\\s\\S]*?<\\/pre>)\\s*/i', array($this, 'ignore'), $text);

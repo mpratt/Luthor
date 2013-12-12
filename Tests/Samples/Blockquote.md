@@ -6,7 +6,7 @@ Normal Text outside the Blockquote
 
 > This is a block quote
 > > This is **inside** the blockquote
-> > Inside of _it again_
+> > Inside of \_it again\_
 > Back to the top
 > this is the ~~initial~~ blockquote
 
@@ -28,5 +28,6 @@ by one long line.
 > > blocquote 2
 > > > Blockquote 3
 >>> Blockquote 3
+>>>>>> Blockquote 4
 > > Blockquote 2
 

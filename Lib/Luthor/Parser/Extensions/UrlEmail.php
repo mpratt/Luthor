@@ -10,34 +10,67 @@
  * file that was distributed with this source code.
  */
 
-namespace Luthor\Parser\Processor;
+namespace Luthor\Parser\Extensions;
+
+use Luthor\Parser\Extensions\Adapters\InlineAdapter;
 
 /**
- * Handles Url and Emails
+ * This is a extension for Url or Email input.
  */
-class UrlEmail
+class UrlEmail extends InlineAdapter
 {
+    /** inline {@inheritdoc} */
+    public function getRegex()
+    {
+        $regex = array(
+            '((?:mailto:)?[^ ]+@[^ ]+)', // <email@domain.com>
+            '(https?://[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/)))', // <https://link.com>
+        );
+
+        return '~<(' . implode('|', $regex) . ')>~A';
+    }
+
+    /** inline {@inheritdoc} */
+    public function parse()
+    {
+        $this->content = trim($this->content, ' <>');
+        if ($this->isLink()) {
+            return $this->linkify($this->content);
+        }
+
+        return $this->email($this->content);
+    }
+
+    /**
+     * Checks if the content is a link
+     *
+     * @return bool
+     */
+    protected function isLink()
+    {
+        return (preg_match('~^http~', $this->content));
+    }
+
     /**
      * Autolinkifys urls
      *
-     * @param object $token
+     * @param string $url
      * @return string
      */
-    public function linkify($token)
+    protected function linkify($url)
     {
-        $url = trim($token->content, ' <>');
         return '<a href="' . $url . '" title="">' . $url . '</a>';
     }
 
     /**
      * Handles mailto/emails
      *
-     * @param object $token
+     * @param string $email
      * @return string
      */
-    public function email($token)
+    protected function email($email)
     {
-        $email = preg_replace('~mailto:~', '', trim($token->content, ' <>'));
+        $email = preg_replace('~mailto:~', '', $email);
         $email = $this->encodeEmail($email);
         return '<a href="mailto:' . $email . '" title="">' . $email . '</a>';
     }
