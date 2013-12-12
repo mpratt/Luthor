@@ -86,7 +86,7 @@ Use the `addExtension()` method to register the extension
 
     class MyExtension extends \Luthor\Parser\Extensions\Adapters\InlineAdapter
     {
-        protected $regex = '~^([^ ]+)~A';
+        protected $regex = '~\^([^ ]+)~A';
         public function parse()
         {
             return '<strong>' . $this->matches['1'] . '</strong>';
@@ -96,7 +96,7 @@ Use the `addExtension()` method to register the extension
     $lex = new \Luthor\Luthor();
     $lex->addExtension(new MyExtension());
     echo $lex->parse('I love ^Luthor !');
-    // <p>I love <strong>Luthor</strong></p>
+    // <p>I love <strong>Luthor</strong>!</p>
 ```
 
 Filters are runned when the text is already processed
