@@ -56,10 +56,7 @@ class Luthor
      * allow_html -> bool | Wether or not to run htmlspecialchars before lexing/parsing
      * max_nesting -> int | How many indentation levels are allowed/detected
      * tab_to_spaces -> int | Converts tabs into "x" spaces
-     * additional_reserved -> string | Add custom chars into the reserved space
-     *                                 Important for custom token creation.
-     * ignore_attr -> array | Array with token types where we should ignore attribute flags {#id} or {.class}
-     * force_line_start -> array | Array with token types that *must* only be valid when the line starts.
+     * reserve_chars -> string | Add custom chars into the reserved space Important for custom token creation.
      */
     public function __construct(array $config = array())
     {
@@ -113,7 +110,7 @@ class Luthor
     {
         $filters = array();
 
-        // Parse Inline markdown
+        // Parse Markdown References
         $filters[] = array(new InlineReference(), 'translate');
 
         // Minor corrections on the finished html
